@@ -4,7 +4,7 @@
 #include "ProjectionRouter.h"
 
 void ProjectionRouterTop(BXType bx,
-                         const TrackletProjectionMemory<BARRELPS>*,
+                         const TrackletProjectionInputMemory<BARRELPS>*,
                          BXType&,
                          AllProjectionMemory<BARRELPS>&,
                          VMProjectionMemory<BARREL>*);

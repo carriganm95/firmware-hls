@@ -1,7 +1,7 @@
 #include "ProjectionRouterTop.h"
 
 void ProjectionRouterTop(BXType bx,
-                         const TrackletProjectionMemory<BARRELPS> projin[8],
+                         const TrackletProjectionInputMemory<BARRELPS> projin[8],
                          BXType& bx_o,
                          AllProjectionMemory<BARRELPS>& allprojout,
                          VMProjectionMemory<BARREL> vmprojout[8])

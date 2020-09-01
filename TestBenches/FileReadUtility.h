@@ -30,33 +30,6 @@ bool openDataFile(std::ifstream& file_in, const std::string& file_name)
   return success;
 }
 
-template<class DataType>
-void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
-
-  std::string line;
-
-  if (ievt==0) {
-    getline(fin, line);
-  }
-
-  memarray.clear(ievt);
-
-  while (getline(fin, line)) {
-    
-    if (!fin.good()) {
-      return;
-    }
-
-    if (line.find("Event") != std::string::npos) {
-	return;
-    }
-    else {
-      memarray.write_mem_line(ievt,line);
-    }
-    
-  }
-}
-
 std::vector<std::string> split(const std::string& s, char delimiter)
 {
   std::vector<std::string> tokens;
@@ -75,6 +48,7 @@ template<class MemType>
 void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
 {
   std::string line;
+  int nentries = 0;
 
   if (ievt==0) {
     getline(fin, line);
@@ -92,10 +66,12 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
       return;
     } else {
       if (split(line,' ').size()==4) {
-       memory.write_mem(ievt, line, base);
+       bool success = memory.write_mem(ievt, line, nentries, base);
+       if (success) nentries ++;
       } else {
 	const std::string datastr = split(line, ' ').back();
-	memory.write_mem(ievt, datastr, base);
+	bool success = memory.write_mem(ievt, datastr, nentries, base);
+        if (success) nentries ++;
       }
     }	
   }
@@ -125,62 +101,37 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
   MemType memory_ref;
   writeMemFromFile<MemType>(memory_ref, fout, ievt, InputBase);
 
-  // Check if at least one of the memories in comparison is non empty
-  // before spamming the screen
-  if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
-    std::cout << label << ":" << std::endl;
-  }
-
-  ////////////////////////////////////////
-  // compare expected data with those computed and stored in the output memory
-  if (memory.getEntries(ievt)!=0 or memory_ref.getEntries(ievt)!=0)
-    std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
-  
-  for (int i = 0; i < memory_ref.getEntries(ievt); ++i) {
-
-    // Maximum processing steps per event is kMaxProc
-    if (i >= maxProc) {
-      std::cout << "WARNING: Extra data in the reference memory!" << std::endl;
-      std::cout << "Truncation due to maximum number of processing steps per event maxProc = " << std::dec << maxProc << std::endl;
-      truncated = true;
-      break;
-    }
-    
-    std::cout << i << "\t";
-
+  for (int i = 0; i < memory_ref.getDepth(); ++i) {
     auto data_ref = memory_ref.read_mem(ievt,i).raw();
+    auto data_com = memory.read_mem(ievt,i).raw();
+    // If both reference and computed memories are completely empty, skip it
+    if (i==0) {
+      if (data_com == 0 && data_ref == 0) break;
+      std::cout << label << ":" << std::endl;
+      std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
+    }
+    if (data_com == 0 && data_ref == 0) continue;
+
+    std::cout << i << "\t";
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_ref) << "\t";
     else                 std::cout << std::hex << data_ref << "\t";
     
-    if (i >= memory.getEntries(ievt) ) {
-      // missing entries in the computed memory
-      if (not truncated) err_count++;
-      std::cout << "missing" << std::endl;
-      continue;
-    }
-
-    auto data_com = memory.read_mem(ievt,i).raw();
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_com);
     else                 std::cout << std::hex << data_com; // << std::endl;
 
-    if (data_com != data_ref) {
+    if (data_com == 0) {
+      std::cout << "\t" << "<=== missing";
+      if (!truncated) err_count++;
+    } else if (data_ref == 0) {
+      std::cout << "\t" << "<=== EXTRA";
+      err_count++;
+    } else if (data_com != data_ref) {
       std::cout << "\t" << "<=== INCONSISTENT";
       err_count++;
     }
-
     std::cout << std::endl;
   }
   
-  // in case computed memory has extra contents...
-  if (memory.getEntries(ievt) >  memory_ref.getEntries(ievt)) {
-    
-    for (int i = memory_ref.getEntries(ievt); i < memory.getEntries(ievt); ++i) {
-      auto data_extra = memory.read_mem(ievt, i).raw();   
-      std::cout << "missing" << "\t" << std::hex << data_extra << std::endl;
-      err_count++;
-    }
-  }
-
   return err_count;
   
 }

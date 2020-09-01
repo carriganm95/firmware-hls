@@ -16,7 +16,7 @@ namespace PR
                        ap_uint<nINMEM>& mem_hasdata,
                        ap_uint<kNBits_MemAddr> nentries[nINMEM],
                        ap_uint<kNBits_MemAddr>& read_addr,
-                       const TrackletProjectionMemory<PROJTYPE> projin[],
+                       const TrackletProjectionInputMemory<PROJTYPE> projin[],
                        TrackletProjection<PROJTYPE>& data) 
   {
 #pragma HLS inline
@@ -64,7 +64,7 @@ namespace PR
 template<regionType PROJTYPE, regionType VMPTYPE, unsigned int nINMEM,
          unsigned int nOUTMEM, int LAYER=0, int DISK=0>
 void ProjectionRouter(BXType bx,
-                      const TrackletProjectionMemory<PROJTYPE> projin[],
+                      const TrackletProjectionInputMemory<PROJTYPE> projin[],
                       BXType& bx_o,
                       AllProjectionMemory<PROJTYPE>& allprojout,
                       VMProjectionMemory<VMPTYPE> vmprojout[])
@@ -79,10 +79,10 @@ void ProjectionRouter(BXType bx,
   ap_uint<kNBits_MemAddr> nallproj = 0;
   ap_uint<kNBits_MemAddr> nvmprojout[nOUTMEM];
 #pragma HLS ARRAY_PARTITION variable=nvmprojout complete dim=0
-  allprojout.clear(bx);
+//  allprojout.clear(bx);
   for (int i=0; i<nOUTMEM; i++) {
 #pragma HLS unroll
-    vmprojout[i].clear(bx);
+//    vmprojout[i].clear(bx);
     nvmprojout[i] = 0;
   }
 
