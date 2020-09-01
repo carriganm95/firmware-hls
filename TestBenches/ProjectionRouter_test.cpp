@@ -18,7 +18,7 @@ int main()
 
   ///////////////////////////
   // input memories
-  static TrackletProjectionInputMemory<BARRELPS> tprojarray[8];
+  static TrackletProjectionMemory<BARRELPS> tprojarray[8];
 
   // output memories
   static AllProjectionMemory<BARRELPS> allproj;
@@ -105,14 +105,14 @@ int main()
     cout << "Event: " << dec << ievt << endl;
 
     // read event and write to memories
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[0], fin_tproj1, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[1], fin_tproj2, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[2], fin_tproj3, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[3], fin_tproj4, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[4], fin_tproj5, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[5], fin_tproj6, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[6], fin_tproj7, ievt);
-    writeMemFromFile<TrackletProjectionInputMemory<BARRELPS> >(tprojarray[7], fin_tproj8, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[0], fin_tproj1, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[1], fin_tproj2, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[2], fin_tproj3, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[3], fin_tproj4, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[4], fin_tproj5, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[5], fin_tproj6, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[6], fin_tproj7, ievt);
+    writeMemFromFile<TrackletProjectionMemory<BARRELPS> >(tprojarray[7], fin_tproj8, ievt);
 
     // bx
     BXType bx = ievt;

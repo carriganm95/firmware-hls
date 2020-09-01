@@ -16,7 +16,7 @@ namespace PR
                        ap_uint<nINMEM>& mem_hasdata,
                        ap_uint<kNBits_MemAddr> nentries[nINMEM],
                        ap_uint<kNBits_MemAddr>& read_addr,
-                       const TrackletProjectionInputMemory<PROJTYPE> projin[],
+                       const TrackletProjectionMemory<PROJTYPE> projin[],
                        TrackletProjection<PROJTYPE>& data) 
   {
 #pragma HLS inline
@@ -64,7 +64,7 @@ namespace PR
 template<regionType PROJTYPE, regionType VMPTYPE, unsigned int nINMEM,
          unsigned int nOUTMEM, int LAYER=0, int DISK=0>
 void ProjectionRouter(BXType bx,
-                      const TrackletProjectionInputMemory<PROJTYPE> projin[],
+                      const TrackletProjectionMemory<PROJTYPE> projin[],
                       BXType& bx_o,
                       AllProjectionMemory<PROJTYPE>& allprojout,
                       VMProjectionMemory<VMPTYPE> vmprojout[])

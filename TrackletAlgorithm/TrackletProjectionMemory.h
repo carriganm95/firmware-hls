@@ -198,7 +198,6 @@ private:
 
 // Memory definition
 template<int TProjType> using TrackletProjectionMemory = MemoryTemplate<TrackletProjection<TProjType>, 1, kNBits_MemAddr>;
-template<int TProjType> using TrackletProjectionInputMemory = InputMemoryTemplate<TrackletProjection<TProjType>, 1, kNBits_MemAddr>;
 // FIXME: double check number of bits for bx and for memory address
 
 #endif

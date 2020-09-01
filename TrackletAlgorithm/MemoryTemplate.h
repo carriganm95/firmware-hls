@@ -17,10 +17,12 @@ class MemoryTemplate
 public:
   typedef typename DataType::BitWidths BitWidths;
   typedef ap_uint<NBIT_BX> BunchXingT;
+  typedef ap_uint<NBIT_ADDR> NEntryT;
   
 protected:
 
   DataType dataarray_[1<<NBIT_BX][1<<NBIT_ADDR];  // data array
+  NEntryT nentries_[1<<NBIT_BX];
   
 public:
 
@@ -28,6 +30,11 @@ public:
   unsigned int getNBX() const {return (1<<NBIT_BX);}
 
   const DataType (&get_mem() const)[1<<NBIT_BX][1<<NBIT_ADDR] {return dataarray_;}
+
+  NEntryT getEntries(BunchXingT bx) const {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
+        return nentries_[bx];
+  }
 
   DataType read_mem(BunchXingT ibx, ap_uint<NBIT_ADDR> index) const
   {
@@ -71,6 +78,7 @@ public:
   void clear()
   {
     MEM_RST: for (size_t ibx=0; ibx<(1<<NBIT_BX); ++ibx) {
+      nentries_[ibx] = 0;
       for (size_t addr=0; addr<(1<<NBIT_ADDR); ++addr) {
         write_mem(ibx,"0",addr);
       }
@@ -80,16 +88,18 @@ public:
   // write memory from text file
   bool write_mem(BunchXingT ibx, const char* datastr, int addr_index, int base=16)
   {
-     DataType data(datastr, base);
-     return write_mem(ibx, data, addr_index);
+     DataType data(datastr, base); 
+     bool success = write_mem(ibx, data, addr_index);
+     if (success) nentries_[ibx] ++;
   }
 
   bool write_mem(BunchXingT ibx, const std::string datastr, int addr_index, int base=16)
   {
     DataType data(datastr.c_str(), base);
-    return write_mem(ibx, data, addr_index);
+    bool success = write_mem(ibx, data, addr_index);
+    if (success) nentries_[ibx] ++;
   }
-  
+
   // print memory contents
   void print_data(const DataType data) const
   {
@@ -105,52 +115,6 @@ public:
   static constexpr int getWidth() {return DataType::getWidth();}
   
 #endif
-};
-
-template<class DataType, unsigned int NBIT_BX, unsigned int NBIT_ADDR>
-class InputMemoryTemplate : public MemoryTemplate<DataType, NBIT_BX, NBIT_ADDR>
-{
-public:
-  typedef ap_uint<NBIT_ADDR> NEntryT;
-  typedef typename MemoryTemplate<DataType,NBIT_BX,NBIT_ADDR>::BunchXingT BunchXingT;
-
-protected:
-
-  NEntryT nentries_[1<<NBIT_BX];
-
-public:
-
-  NEntryT getEntries(BunchXingT bx) const {
-#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
-        return nentries_[bx];
-  }
-
-  #ifndef __SYNTHESIS__
-  // write memory from text file
-  using MemoryTemplate<DataType,NBIT_BX,NBIT_ADDR>::write_mem;
-  bool write_mem(BunchXingT ibx, const char* datastr, int addr_index, int base=16)
-  {
-     DataType data(datastr, base);
-     bool success = write_mem(ibx, data, addr_index);
-     if (success) nentries_[ibx] ++;
-  }
-
-  bool write_mem(BunchXingT ibx, const std::string datastr, int addr_index, int base=16)
-  {
-    DataType data(datastr.c_str(), base);
-    bool success = write_mem(ibx, data, addr_index);
-    if (success) nentries_[ibx] ++;
-  }
-
-  void clear()
-  {
-    MemoryTemplate<DataType,NBIT_BX,NBIT_ADDR>::clear();
-    for (size_t ibx=0; ibx<(1<<NBIT_BX); ++ibx) {
-      nentries_[ibx] = 0;
-    }
-  }
-
-  #endif
 };
 
 #endif
