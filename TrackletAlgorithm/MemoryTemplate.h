@@ -22,24 +22,24 @@ public:
 protected:
 
   DataType dataarray_[1<<NBIT_BX][1<<NBIT_ADDR];  // data array
-  NEntryT nentries_[1<<NBIT_BX];
+  NEntryT nentries_[1<<NBIT_BX];                  // number of entries
   
 public:
 
   unsigned int getDepth() const {return (1<<NBIT_ADDR);}
   unsigned int getNBX() const {return (1<<NBIT_BX);}
 
-  const DataType (&get_mem() const)[1<<NBIT_BX][1<<NBIT_ADDR] {return dataarray_;}
-
   NEntryT getEntries(BunchXingT bx) const {
 #pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
-        return nentries_[bx];
+       return nentries_[bx];
   }
+
+  const DataType (&get_mem() const)[1<<NBIT_BX][1<<NBIT_ADDR] {return dataarray_;}
 
   DataType read_mem(BunchXingT ibx, ap_uint<NBIT_ADDR> index) const
   {
-        // TODO: check if valid
-        return dataarray_[ibx][index];
+       // TODO: check if valid
+       return dataarray_[ibx][index];
   }
 
   template<class SpecType>
@@ -77,26 +77,29 @@ public:
 
   void clear()
   {
+    DataType data("0",16);
     MEM_RST: for (size_t ibx=0; ibx<(1<<NBIT_BX); ++ibx) {
       nentries_[ibx] = 0;
       for (size_t addr=0; addr<(1<<NBIT_ADDR); ++addr) {
-        write_mem(ibx,"0",addr);
+        write_mem(ibx,data,addr);
       }
     }
   }
 
   // write memory from text file
-  bool write_mem(BunchXingT ibx, const char* datastr, int addr_index, int base=16)
+  bool write_mem(BunchXingT ibx, const char* datastr, int base=16)
   {
-     DataType data(datastr, base); 
-     bool success = write_mem(ibx, data, addr_index);
+     DataType data(datastr, base);
+     int nent = nentries_[ibx]; 
+     bool success = write_mem(ibx, data, nent);
      if (success) nentries_[ibx] ++;
   }
 
-  bool write_mem(BunchXingT ibx, const std::string datastr, int addr_index, int base=16)
+  bool write_mem(BunchXingT ibx, const std::string datastr, int base=16)
   {
     DataType data(datastr.c_str(), base);
-    bool success = write_mem(ibx, data, addr_index);
+    int nent = nentries_[ibx];
+    bool success = write_mem(ibx, data, nent);
     if (success) nentries_[ibx] ++;
   }
 

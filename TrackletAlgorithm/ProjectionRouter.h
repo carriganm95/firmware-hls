@@ -79,10 +79,8 @@ void ProjectionRouter(BXType bx,
   ap_uint<kNBits_MemAddr> nallproj = 0;
   ap_uint<kNBits_MemAddr> nvmprojout[nOUTMEM];
 #pragma HLS ARRAY_PARTITION variable=nvmprojout complete dim=0
-//  allprojout.clear(bx);
   for (int i=0; i<nOUTMEM; i++) {
 #pragma HLS unroll
-//    vmprojout[i].clear(bx);
     nvmprojout[i] = 0;
   }
 

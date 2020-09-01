@@ -48,7 +48,6 @@ template<class MemType>
 void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
 {
   std::string line;
-  int nentries = 0;
 
   if (ievt==0) {
     getline(fin, line);
@@ -66,12 +65,10 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
       return;
     } else {
       if (split(line,' ').size()==4) {
-       bool success = memory.write_mem(ievt, line, nentries, base);
-       if (success) nentries ++;
+       memory.write_mem(ievt, line, base);
       } else {
 	const std::string datastr = split(line, ' ').back();
-	bool success = memory.write_mem(ievt, datastr, nentries, base);
-        if (success) nentries ++;
+        memory.write_mem(ievt, datastr, base);
       }
     }	
   }
@@ -104,12 +101,13 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
   for (int i = 0; i < memory_ref.getDepth(); ++i) {
     auto data_ref = memory_ref.read_mem(ievt,i).raw();
     auto data_com = memory.read_mem(ievt,i).raw();
-    // If both reference and computed memories are completely empty, skip it
     if (i==0) {
+      // If both reference and computed memories are completely empty, skip it
       if (data_com == 0 && data_ref == 0) break;
       std::cout << label << ":" << std::endl;
       std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
     }
+    // If have reached the end of valid entries in both computed and reference, don't bother printing further
     if (data_com == 0 && data_ref == 0) continue;
 
     std::cout << i << "\t";
@@ -119,12 +117,15 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_com);
     else                 std::cout << std::hex << data_com; // << std::endl;
 
+    // If there is extra entries in reference
     if (data_com == 0) {
       std::cout << "\t" << "<=== missing";
       if (!truncated) err_count++;
+    // If there is extra entries in computed
     } else if (data_ref == 0) {
       std::cout << "\t" << "<=== EXTRA";
       err_count++;
+    // If reference and computed entry are inconsistent
     } else if (data_com != data_ref) {
       std::cout << "\t" << "<=== INCONSISTENT";
       err_count++;
