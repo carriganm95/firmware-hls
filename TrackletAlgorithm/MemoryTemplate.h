@@ -115,6 +115,24 @@ public:
 	print_data(dataarray_[bx][index]);
   }
 
+  void print_mem(BunchXingT bx) const
+  {
+       for (int i = 0; i <  nentries_[bx]; ++i) {
+         std::cout << bx << " " << i << " ";
+         print_entry(bx,i);
+       }
+  }
+
+  void print_mem() const
+  {
+       for (int ibx = 0; ibx < (1<<NBIT_BX); ++ibx) {
+         for (int i = 0; i < nentries_[ibx]; ++i) {
+               std::cout << ibx << " " << i << " ";
+               print_entry(ibx,i);
+         }
+       }
+  }
+
   static constexpr int getWidth() {return DataType::getWidth();}
   
 #endif

@@ -584,21 +584,6 @@ TrackletCalculator(
 #pragma HLS array_partition variable=nproj_barrel_2s complete
 #pragma HLS array_partition variable=nproj_disk complete
 
-// Clear all output memories before starting.
-  trackletParameters->clear(bx);
-  clear_barrel_ps: for (unsigned i = 0; i < TC::N_PROJOUT_BARRELPS; i++)
-#pragma HLS unroll
-    if (TPROJMaskBarrel<Seed, iTC>() & (0x1 << i))
-      projout_barrel_ps[i].clear();
-  clear_barrel_2s: for (unsigned i = 0; i < TC::N_PROJOUT_BARREL2S; i++)
-#pragma HLS unroll
-    if (TPROJMaskBarrel<Seed, iTC>() & (0x1 << (i + TC::N_PROJOUT_BARRELPS)))
-      projout_barrel_2s[i].clear();
-  clear_disk: for (unsigned i = 0; i < TC::N_PROJOUT_DISK; i++)
-#pragma HLS unroll
-    if (TPROJMaskDisk<Seed, iTC>() & (0x1 << i))
-      projout_disk[i].clear();
-
   TrackletProjection<BARRELPS>::TProjTrackletIndex trackletIndex = 0;
 
   TC::Types::nSPMem iSPMem;
