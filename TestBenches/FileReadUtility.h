@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <vector>
 #include <bitset>
-
 #include "../TrackletAlgorithm/Constants.h"
 
 bool openDataFile(std::ifstream& file_in, const std::string& file_name)
@@ -71,7 +70,6 @@ std::vector<std::string> split(const std::string& s, char delimiter)
   return tokens;
 }
 
-
 template<class MemType>
 void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
 {
@@ -103,6 +101,60 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
   
 }
 
+std::string getOutputFile(int region, int channel)
+{
+  std::ifstream myfile;
+  myfile.open("../../../../firmware-hls/TestBenches/InputStubMem_mapping.txt");
+  if(myfile.fail()) std::cout << "ERROR" << std::endl;
+  std:: string this_line;
+  std::string filename;
+  //std::cout << "printing from getOutputFile" << std::endl;
+  int line_num = 0;
+  while(getline(myfile, this_line)){
+      //std::cout << line_num << " " << region << std::endl;
+      if(line_num == region) {
+        filename = this_line.substr(2, 20);
+        break;
+      }
+      line_num++;
+      if(myfile.eof()) std::cout << "Incorrect Region or Channel" << std::endl;
+  }
+
+  return filename;
+
+  
+}
+
+template<class MemType>
+void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
+{  
+  //std::cout << "In write mem " << filename << std::endl;
+  std::ofstream fout;
+  fout.open(filename, std::ios::app);
+  if(fout.fail()) std::cout << "ERROR" << std::endl;
+  std::bitset<3> bx(ievt);
+  fout << "BX = " << bx << " Event : " << ievt  << std::endl;
+
+  const unsigned int nStubsMem( memory.getEntries(0) );
+  for(unsigned int iMem=0; iMem < nStubsMem; ++iMem){
+    fout << std::hex << iMem << " ";
+    std::bitset<36> this_mem(memory.read_mem(0, iMem).raw());
+    for(unsigned int iBit=0; iBit < 36; ++iBit){
+      if(iBit == 7 || iBit == 14 || iBit == 28 || iBit==32){
+        fout << "|" << this_mem[iBit];
+      }
+      else if (iBit==35){
+        fout << this_mem[iBit] << " ";
+      }
+      else {
+        fout << this_mem[iBit];
+      }
+    }
+    fout << std::hex << memory.read_mem(0, iMem).raw() << std::endl;
+  }
+  fout.close();
+}
+
 // TODO: FIXME or write a new one for binned memories
 template<class MemType, int InputBase=16, int OutputBase=16>
 unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
@@ -117,8 +169,7 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 template<class MemType, int InputBase=16, int OutputBase=16>
 unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label,
-                                bool& truncated, int maxProc = kMaxProc
-                                , bool irMemory = false)
+                                bool& truncated, int maxProc = kMaxProc)
 {
   unsigned int err_count = 0;
 
@@ -129,14 +180,13 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 
   // Check if at least one of the memories in comparison is non empty
   // before spamming the screen
-  int iBx = irMemory ? 0 : ievt;
-  if (memory_ref.getEntries(ievt) or memory.getEntries(iBx)) {
+  if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
     std::cout << label << ":" << std::endl;
   }
 
   ////////////////////////////////////////
   // compare expected data with those computed and stored in the output memory
-  if (memory.getEntries(iBx)!=0 or memory_ref.getEntries(ievt)!=0)
+  if (memory.getEntries(ievt)!=0 or memory_ref.getEntries(ievt)!=0)
     std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
   
   for (int i = 0; i < memory_ref.getEntries(ievt); ++i) {
@@ -155,14 +205,14 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_ref) << "\t";
     else                 std::cout << std::hex << data_ref << "\t";
     
-    if (i >= memory.getEntries(iBx) ) {
+    if (i >= memory.getEntries(ievt) ) {
       // missing entries in the computed memory
       if (not truncated) err_count++;
       std::cout << "missing" << std::endl;
       continue;
     }
 
-    auto data_com = memory.read_mem(iBx,i).raw();
+    auto data_com = memory.read_mem(ievt,i).raw();
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_com);
     else                 std::cout << std::hex << data_com; // << std::endl;
 
@@ -175,10 +225,10 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
   }
   
   // in case computed memory has extra contents...
-  if (memory.getEntries(iBx) >  memory_ref.getEntries(ievt)) {
+  if (memory.getEntries(ievt) >  memory_ref.getEntries(ievt)) {
     
-    for (int i = memory_ref.getEntries(ievt); i < memory.getEntries(iBx); ++i) {
-      auto data_extra = memory.read_mem(iBx, i).raw();   
+    for (int i = memory_ref.getEntries(ievt); i < memory.getEntries(ievt); ++i) {
+      auto data_extra = memory.read_mem(ievt, i).raw();   
       std::cout << "missing" << "\t" << std::hex << data_extra << std::endl;
       err_count++;
     }
