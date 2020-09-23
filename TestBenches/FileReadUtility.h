@@ -13,6 +13,7 @@
 #include <vector>
 #include <bitset>
 #include "../TrackletAlgorithm/Constants.h"
+//#include "../TrackerDTC/src/Setup.cc"
 
 bool openDataFile(std::ifstream& file_in, const std::string& file_name)
 {
@@ -101,25 +102,47 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
   
 }
 
-std::string getOutputFile(int region, int channel)
+std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
+std::string getOutputFile(int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
 {
+
   std::ifstream myfile;
-  myfile.open("../../../../firmware-hls/TestBenches/InputStubMem_mapping.txt");
+  myfile.open("outputMem.txt");
+  //Following lines are for creating the mapping
+  /*std::ofstream outfile;
+  outfile.open("outputMem_test.txt", std::ios::app);
+  std::string out_filename = "InputStubs_";
+  if(is_barrel) out_filename += "L" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!is_barrel) out_filename += "D" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!side) out_filename += "_neg";
+  if(slot <= 2) out_filename += "_PS10G_" + std::to_string(slot); 
+  if(slot <= 5 && slot >= 3) out_filename += "_PS5G_" + std::to_string(slot);
+  if(slot >= 6) out_filename += "_2S_" + std::to_string(slot-5);
+  if(mem_layer != 1){
+    if(phi < 2) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  if(mem_layer == 1){
+    if(phi < 4) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  out_filename += std::to_string(dtcId) + ".dat"; 
+  outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;*/
+  
+  //std::cout << "Layer: " << mem_layer << " Is Barrel: " << is_barrel << " Phi Region: " << phi << std::endl;
   if(myfile.fail()) std::cout << "ERROR" << std::endl;
   std:: string this_line;
   std::string filename;
   //std::cout << "printing from getOutputFile" << std::endl;
-  int line_num = 0;
   while(getline(myfile, this_line)){
-      //std::cout << line_num << " " << region << std::endl;
-      if(line_num == region) {
-        filename = this_line.substr(2, 20);
+     int file_id, layer_id, phi_id, barrel_id, slot_id, side_id;
+     myfile >> file_id >> layer_id >> phi_id >> barrel_id >> slot_id >> side_id >> filename;
+     if(layer_id == mem_layer && is_barrel == barrel_id && slot_id == slot && phi_id == phi && side_id == side && file_id == dtcId) {
         break;
       }
-      line_num++;
-      if(myfile.eof()) std::cout << "Incorrect Region or Channel" << std::endl;
+      if(myfile.eof()) std::cout << "Incorrect Region or Channel " << "DTCID: " << dtcId << " Layer: " << mem_layer << " Barrel: " << is_barrel << " slot: " << slot << " side: " << side << " Phi: " << phi <<std::endl;
   }
-
+  //std::cout << "Get output file: " << filename << std::endl;
   return filename;
 
   
@@ -129,27 +152,32 @@ template<class MemType>
 void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
 {  
   //std::cout << "In write mem " << filename << std::endl;
-  std::ofstream fout;
+  std::fstream fout;
   fout.open(filename, std::ios::app);
   if(fout.fail()) std::cout << "ERROR" << std::endl;
+  std::string this_line;
   std::bitset<3> bx(ievt);
   fout << "BX = " << bx << " Event : " << ievt  << std::endl;
-
+  //std::cout << "BX = " << bx << " Event : " << ievt  << std::endl;
   const unsigned int nStubsMem( memory.getEntries(0) );
   for(unsigned int iMem=0; iMem < nStubsMem; ++iMem){
     fout << std::hex << iMem << " ";
     std::bitset<36> this_mem(memory.read_mem(0, iMem).raw());
-    for(unsigned int iBit=0; iBit < 36; ++iBit){
-      if(iBit == 7 || iBit == 14 || iBit == 28 || iBit==32){
+    for(unsigned int iBit=36; iBit > 0; iBit--){
+      if(iBit == 29 || iBit == 17 || iBit == 3){
         fout << "|" << this_mem[iBit];
       }
-      else if (iBit==35){
+      else if (iBit==1){
         fout << this_mem[iBit] << " ";
       }
       else {
         fout << this_mem[iBit];
       }
     }
+    //for some reason need to print this in hex to have it written in hex in file	
+    std::cout << std::hex  << memory.read_mem(0, iMem).raw() << std::endl;
+    //std::stringstream hex_mem;
+    //hex_mem << std::hex << memory.read_mem(0, iMem).raw();
     fout << std::hex << memory.read_mem(0, iMem).raw() << std::endl;
   }
   fout.close();
