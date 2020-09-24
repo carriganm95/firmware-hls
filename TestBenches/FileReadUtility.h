@@ -161,24 +161,18 @@ void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=1
   //std::cout << "BX = " << bx << " Event : " << ievt  << std::endl;
   const unsigned int nStubsMem( memory.getEntries(0) );
   for(unsigned int iMem=0; iMem < nStubsMem; ++iMem){
-    fout << std::hex << iMem << " ";
+    fout << std::setw(2) << std::setfill('0') << std::hex << iMem << " ";
     std::bitset<36> this_mem(memory.read_mem(0, iMem).raw());
-    for(unsigned int iBit=36; iBit > 0; iBit--){
-      if(iBit == 29 || iBit == 17 || iBit == 3){
+    for(int iBit=35; iBit >= 0; iBit--){
+      if(iBit == 28 || iBit == 20 || iBit == 3){
         fout << "|" << this_mem[iBit];
-      }
-      else if (iBit==1){
-        fout << this_mem[iBit] << " ";
       }
       else {
         fout << this_mem[iBit];
       }
     }
-    //for some reason need to print this in hex to have it written in hex in file	
-    std::cout << std::hex  << memory.read_mem(0, iMem).raw() << std::endl;
-    //std::stringstream hex_mem;
-    //hex_mem << std::hex << memory.read_mem(0, iMem).raw();
-    fout << std::hex << memory.read_mem(0, iMem).raw() << std::endl;
+    //dump the full hex version of the memory    
+    fout << " 0x" << std::uppercase << std::hex  << std::setfill('0') << std::setw(9) << this_mem.to_ullong() << std::endl;
   }
   fout.close();
 }
