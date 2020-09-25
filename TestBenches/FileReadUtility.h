@@ -103,11 +103,12 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
 }
 
 std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
-std::string getOutputFile(int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
+std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
 {
 
-  std::ifstream myfile;
-  myfile.open("outputMem.txt");
+  myfile.clear();
+  myfile.seekg(0);
+
   //Following lines are for creating the mapping
   /*std::ofstream outfile;
   outfile.open("outputMem_test.txt", std::ios::app);
@@ -129,11 +130,9 @@ std::string getOutputFile(int dtcId, int slot, int side, int mem_layer, int is_b
   out_filename += std::to_string(dtcId) + ".dat"; 
   outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;*/
   
-  //std::cout << "Layer: " << mem_layer << " Is Barrel: " << is_barrel << " Phi Region: " << phi << std::endl;
   if(myfile.fail()) std::cout << "ERROR" << std::endl;
   std:: string this_line;
   std::string filename;
-  //std::cout << "printing from getOutputFile" << std::endl;
   while(getline(myfile, this_line)){
      int file_id, layer_id, phi_id, barrel_id, slot_id, side_id;
      myfile >> file_id >> layer_id >> phi_id >> barrel_id >> slot_id >> side_id >> filename;
@@ -142,7 +141,6 @@ std::string getOutputFile(int dtcId, int slot, int side, int mem_layer, int is_b
       }
       if(myfile.eof()) std::cout << "Incorrect Region or Channel " << "DTCID: " << dtcId << " Layer: " << mem_layer << " Barrel: " << is_barrel << " slot: " << slot << " side: " << side << " Phi: " << phi <<std::endl;
   }
-  //std::cout << "Get output file: " << filename << std::endl;
   return filename;
 
   
