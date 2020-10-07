@@ -13,6 +13,7 @@
 #include <vector>
 #include <bitset>
 #include "../TrackletAlgorithm/Constants.h"
+#include <sstream>
 //#include "../TrackerDTC/src/Setup.cc"
 
 bool openDataFile(std::ifstream& file_in, const std::string& file_name)
@@ -100,6 +101,52 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
     }	
   }
   
+}
+
+template<class MemType>
+void getLineFromFile(MemType& memory, std::string filename, int ievt, int base=16){
+
+  std::ifstream myfile;
+  myfile.open(filename);
+  int mem_counter = 0;
+  std::string line;
+  bool isEvent = false;
+
+  while(getline(myfile, line)){
+
+    if(myfile.fail()){
+      std::cout << "ERROR READING INPUT FILE" << std::endl;
+      return;
+    }
+
+    if(isEvent == false){
+      if(line.find("Event") != std::string::npos && line.find(std::to_string(ievt)) != std::string::npos){
+        isEvent = true;
+        continue;
+      }
+
+      else continue;
+    }
+
+    if(isEvent == true){
+
+      if(line.find("Event") != std::string::npos){
+        if(line.find(std::to_string(ievt)) != std::string::npos) continue;
+        isEvent = false;
+        return;
+      }
+      else{
+        std::cout << "isEvent==True and else" << line << std::endl;
+        std::string stub = line.substr(43, 55);
+        std::cout << "Substring: " << stub << std::endl;
+        ap_uint<20> stub_int = std::stoul(stub, nullptr, 16);
+        std::cout << "Dec: " << stub_int << std::endl;
+        InputStub<TRACKER> hMemWord(stub_int);
+        memory.write_mem(0, hMemWord, mem_counter);
+        mem_counter++;
+      }
+    }
+  }
 }
 
 std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
