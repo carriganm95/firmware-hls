@@ -1,6 +1,6 @@
 // Class template for binned memory module
-#ifndef MEMORYTEMPLATEBINNED_HH
-#define MEMORYTEMPLATEBINNED_HH
+#ifndef TrackletAlgorithm_MemoryTemplateBinned_h
+#define TrackletAlgorithm_MemoryTemplateBinned_h
 
 #ifndef __SYNTHESIS__
 #include <iostream>
@@ -74,7 +74,7 @@ public:
 
   NEntryT getEntries(BunchXingT bx) const {
     NEntryT val = 0;
-    for ( auto i = 0; i < getDepth(); ++i ) {
+    for ( unsigned int i = 0; i < getDepth(); ++i ) {
       val += getEntries(bx, i);
     }
     return val;
@@ -106,7 +106,7 @@ public:
 
 	NEntryT nentry_ibx = nentries_[ibx][slot];
 
-	if (nentry_ibx <= (kNMemDepth)) {
+	if (nentry_ibx < (1<<(NBIT_ADDR-NBIT_BIN))) {
 	  // write address for slot: 1<<(NBIT_ADDR-NBIT_BIN) * slot + nentry_ibx
 	  dataarray_[ibx][(1<<(NBIT_ADDR-NBIT_BIN))*slot+nentry_ibx] = data;
 	  nentries_[ibx][slot] = nentry_ibx + 1;
@@ -123,6 +123,14 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
+
+   std::string name_;   
+   void setName(std::string name) { name_ = name;}
+   std::string const& getName() const { return name_;}
+
+   unsigned int iSector_;   
+   void setSector(unsigned int iS) { iSector_ = iS;}
+   unsigned int getSector() const { return iSector_;}  
   
   ///////////////////////////////////
   std::vector<std::string> split(const std::string& s, char delimiter)
@@ -143,7 +151,8 @@ public:
 
     std::string datastr = split(line, ' ').back();
 
-    int slot=atoi(split(line, ' ').front().c_str());
+    int slot = (int)strtol(split(line, ' ').front().c_str(), nullptr, base); // Convert string (in hexadecimal) to int
+    // Originally: atoi(split(line, ' ').front().c_str()); but that didn't work for disks with 16 bins
 
     DataType data(datastr.c_str(), base);
     //std::cout << "write_mem slot data : " << slot<<" "<<data << std::endl;
@@ -169,7 +178,7 @@ public:
       //std::cout << "slot "<<slot<<" entries "
       //		<<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
       for (int i = 0; i < nentries_[bx][slot]; ++i) {
-		std::cout << bx << " " << i << " ";
+		std::cout << std::dec << slot << " " << i << " ";
 		print_entry(bx, i + slot*(1<<(NBIT_ADDR-NBIT_BIN)) );
       }
     }

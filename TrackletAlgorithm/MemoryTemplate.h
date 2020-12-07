@@ -1,6 +1,6 @@
 // Class template for memory module
-#ifndef MEMORYTEMPLATE_HH
-#define MEMORYTEMPLATE_HH
+#ifndef TrackletAlgorithm_MemoryTemplate_h
+#define TrackletAlgorithm_MemoryTemplate_h
 
 #include <iostream>
 
@@ -84,7 +84,7 @@ public:
   {
 #pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
 #pragma HLS inline
-    if (addr_index <= (1<<NBIT_ADDR)) {
+    if (addr_index < (1<<NBIT_ADDR)) {
       dataarray_[ibx][addr_index] = data;
       nentries_[ibx] = addr_index + 1;
       return true;
@@ -95,11 +95,27 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
+
   
+   std::string name_;   
+   void setName(std::string name) { name_ = name;}
+   std::string const& getName() const { return name_;}
+
+   unsigned int iSector_;   
+   void setSector(unsigned int iS) { iSector_ = iS;}
+   unsigned int getSector() const { return iSector_;}     
+   
   // write memory from text file
   bool write_mem(BunchXingT ibx, const char* datastr, int base=16)
   {
 	DataType data(datastr, base);
+        int nent = nentries_[ibx];
+	// std::cout << "write_mem " << data << std::endl;
+	return write_mem(ibx, data, nent);
+  }
+  bool write_mem(BunchXingT ibx, const std::string datastr, int base=16)
+  {
+    DataType data(datastr.c_str(), base);
         int nent = nentries_[ibx];
 	// std::cout << "write_mem " << data << std::endl;
 	return write_mem(ibx, data, nent);
