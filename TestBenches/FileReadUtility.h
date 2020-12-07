@@ -15,7 +15,7 @@
 #include "../TrackletAlgorithm/Constants.h"
 //#include "../TrackerDTC/src/Setup.cc"
 
-bool openDataFile(std::ifstream& file_in, const std::string& file_name)
+inline bool openDataFile(std::ifstream& file_in, const std::string& file_name)
 {
   file_in.open(file_name);
 
@@ -31,7 +31,7 @@ bool openDataFile(std::ifstream& file_in, const std::string& file_name)
 }
 
 template<class DataType>
-void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
+inline void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
 
   std::string line;
 
@@ -57,7 +57,7 @@ void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
   }
 }
 
-std::vector<std::string> split(const std::string& s, char delimiter)
+inline std::vector<std::string> split(const std::string& s, char delimiter)
 {
   std::vector<std::string> tokens;
   std::string token;
@@ -72,17 +72,23 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 }
 
 template<class MemType>
-void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
+inline void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, bool first, int base=16)
 {
   std::string line;
+  
+  //std::cout << " We are in writeMemFromFile " << std::endl;
 
-  if (ievt==0) {
+  // What is this here for? Expecting a header line?  Code returns when hit "Event" so this gets the first line out of the way.
+  //if (ievt==0) {
+  if(first) { 
     getline(fin, line);
   }
   
   memory.clear();
   
   while (getline(fin, line)) {
+  
+    //std::cout << " Read this line from file " << line << std::endl;
     
     if (!fin.good()) {
       return;
@@ -92,9 +98,11 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
       return;
     } else {
       if (split(line,' ').size()==4) {
+       //std::cout << ievt << " Writing to memory: " << line << std::endl;
        memory.write_mem(ievt, line, base);
       } else {
 	const std::string datastr = split(line, ' ').back();
+	//std::cout << ievt << " Writing to memory " << datastr << std::endl;
 	memory.write_mem(ievt, datastr, base);
       }
     }	
@@ -102,9 +110,11 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
   
 }
 
-std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
-std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
+
+inline std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
 {
+
+//std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
 
   myfile.clear();
   myfile.seekg(0);
@@ -128,8 +138,8 @@ std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, 
     else out_filename += "_B_";
   }
   out_filename += std::to_string(dtcId) + ".dat"; 
-  outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;*/
-  
+  outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;
+  */
   if(myfile.fail()) std::cout << "ERROR" << std::endl;
   std:: string this_line;
   std::string filename;
@@ -147,7 +157,7 @@ std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, 
 }
 
 template<class MemType>
-void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
+inline void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
 {  
   //std::cout << "In write mem " << filename << std::endl;
   std::fstream fout;
@@ -177,7 +187,7 @@ void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=1
 
 // TODO: FIXME or write a new one for binned memories
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label)
 {
   bool truncated = false;
@@ -187,7 +197,7 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 }
 
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label,
                                 bool& truncated, int maxProc = kMaxProc)
 {
@@ -259,7 +269,7 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 }
 
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareBinnedMemWithFile(const MemType& memory, 
+inline unsigned int compareBinnedMemWithFile(const MemType& memory, 
                                       std::ifstream& fout,
                                       int ievt, const std::string& label,
                                       bool& truncated, int maxProc = kMaxProc)

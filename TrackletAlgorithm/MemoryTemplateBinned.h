@@ -74,7 +74,7 @@ public:
 
   NEntryT getEntries(BunchXingT bx) const {
     NEntryT val = 0;
-    for ( auto i = 0; i < getDepth(); ++i ) {
+    for ( unsigned int i = 0; i < getDepth(); ++i ) {
       val += getEntries(bx, i);
     }
     return val;
@@ -123,6 +123,14 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
+
+   std::string name_;   
+   void setName(std::string name) { name_ = name;}
+   std::string const& getName() const { return name_;}
+
+   unsigned int iSector_;   
+   void setSector(unsigned int iS) { iSector_ = iS;}
+   unsigned int getSector() const { return iSector_;}  
   
   ///////////////////////////////////
   std::vector<std::string> split(const std::string& s, char delimiter)
@@ -170,7 +178,7 @@ public:
       //std::cout << "slot "<<slot<<" entries "
       //		<<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
       for (int i = 0; i < nentries_[bx][slot]; ++i) {
-		std::cout << bx << " " << i << " ";
+		std::cout << std::dec << slot << " " << i << " ";
 		print_entry(bx, i + slot*(1<<(NBIT_ADDR-NBIT_BIN)) );
       }
     }

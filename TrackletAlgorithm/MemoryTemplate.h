@@ -95,7 +95,16 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
+
   
+   std::string name_;   
+   void setName(std::string name) { name_ = name;}
+   std::string const& getName() const { return name_;}
+
+   unsigned int iSector_;   
+   void setSector(unsigned int iS) { iSector_ = iS;}
+   unsigned int getSector() const { return iSector_;}     
+   
   // write memory from text file
   bool write_mem(BunchXingT ibx, const char* datastr, int base=16)
   {
