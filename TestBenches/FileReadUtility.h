@@ -1,8 +1,8 @@
 // Utilities used only in test bench for C simulation
 #ifndef __SYNTHESIS__
 
-#ifndef FILEREADUTILITY
-#define FILEREADUTILITY
+#ifndef TestBenches_FileReadUtility_h
+#define TestBenches_FileReadUtility_h
 
 #include <iostream>
 #include <fstream>
@@ -12,10 +12,11 @@
 #include <unistd.h>
 #include <vector>
 #include <bitset>
-
 #include "../TrackletAlgorithm/Constants.h"
+#include <sstream>
+//#include "../TrackerDTC/src/Setup.cc"
 
-bool openDataFile(std::ifstream& file_in, const std::string& file_name)
+inline bool openDataFile(std::ifstream& file_in, const std::string& file_name)
 {
   file_in.open(file_name);
 
@@ -24,14 +25,14 @@ bool openDataFile(std::ifstream& file_in, const std::string& file_name)
     std::cerr << "Open of file " << file_name << " failed with error: ";
     std::cerr << std::strerror(errno);
     std::cerr << std::endl;
-    std::cerr << "running from directory " << getcwd(NULL,0) << std::endl;
+    std::cerr << "running from directory " << getcwd(nullptr,0) << std::endl;
   }
 
   return success;
 }
 
 template<class DataType>
-void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
+inline void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
 
   std::string line;
 
@@ -57,14 +58,14 @@ void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
   }
 }
 
-std::vector<std::string> split(const std::string& s, char delimiter)
+inline std::vector<std::string> split(const std::string& s, char delimiter)
 {
   std::vector<std::string> tokens;
   std::string token;
   std::istringstream sstream(s);
   
   while (getline(sstream, token, delimiter)) {
-    if (token=="") continue;
+    if (token.empty()) continue;
     tokens.push_back(token);
   }
   
@@ -72,17 +73,23 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 }
 
 template<class MemType>
-void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
+inline void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, bool first, int base=16)
 {
   std::string line;
+  
+  //std::cout << " We are in writeMemFromFile " << std::endl;
 
-  if (ievt==0) {
+  // What is this here for? Expecting a header line?  Code returns when hit "Event" so this gets the first line out of the way.
+  //if (ievt==0) {
+  if(first) { 
     getline(fin, line);
   }
   
   memory.clear();
   
   while (getline(fin, line)) {
+  
+    //std::cout << " Read this line from file " << line << std::endl;
     
     if (!fin.good()) {
       return;
@@ -92,19 +99,143 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
       return;
     } else {
       if (split(line,' ').size()==4) {
-	memory.write_mem(ievt, line.c_str(), base);	
+       //std::cout << ievt << " Writing to memory: " << line << std::endl;
+       memory.write_mem(ievt, line, base);
       } else {
 	const std::string datastr = split(line, ' ').back();
-	memory.write_mem(ievt, datastr.c_str(), base);
+	//std::cout << ievt << " Writing to memory " << datastr << std::endl;
+	memory.write_mem(ievt, datastr, base);
       }
     }	
   }
   
 }
 
+/*  To Do: Check into where this came from?
+template<class MemType>
+inline void getLineFromFile(MemType& memory, std::string filename, int ievt, int base=16){
+
+  std::ifstream myfile;
+  myfile.open(filename);
+  int mem_counter = 0;
+  std::string line;
+  bool isEvent = false;
+
+  while(getline(myfile, line)){
+
+    if(myfile.fail()){
+      std::cout << "ERROR READING INPUT FILE" << std::endl;
+      return;
+    }
+
+    if(isEvent == false){
+      if(line.find("Event") != std::string::npos && line.find(std::to_string(ievt)) != std::string::npos){
+        isEvent = true;
+        continue;
+      }
+
+      else continue;
+    }
+
+    if(isEvent == true){
+
+      if(line.find("Event") != std::string::npos){
+        if(line.find(std::to_string(ievt)) != std::string::npos) continue;
+        isEvent = false;
+        return;
+      }
+      else{
+        std::cout << "isEvent==True and else" << line << std::endl;
+        std::string stub = line.substr(43, 55);
+        std::cout << "Substring: " << stub << std::endl;
+        ap_uint<20> stub_int = std::stoul(stub, nullptr, 16);
+        std::cout << "Dec: " << stub_int << std::endl;
+        InputStub<TRACKER> hMemWord(stub_int);
+        memory.write_mem(0, hMemWord, mem_counter);
+        mem_counter++;
+      }
+    }
+  }
+}
+*/
+
+inline std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
+{
+
+//std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
+
+  myfile.clear();
+  myfile.seekg(0);
+
+  //Following lines are for creating the mapping
+  /*std::ofstream outfile;
+  outfile.open("outputMem_test.txt", std::ios::app);
+  std::string out_filename = "InputStubs_";
+  if(is_barrel) out_filename += "L" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!is_barrel) out_filename += "D" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!side) out_filename += "_neg";
+  if(slot <= 2) out_filename += "_PS10G_" + std::to_string(slot); 
+  if(slot <= 5 && slot >= 3) out_filename += "_PS5G_" + std::to_string(slot);
+  if(slot >= 6) out_filename += "_2S_" + std::to_string(slot-5);
+  if(mem_layer != 1){
+    if(phi < 2) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  if(mem_layer == 1){
+    if(phi < 4) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  out_filename += std::to_string(dtcId) + ".dat"; 
+  outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;
+  */
+  if(myfile.fail()) std::cout << "ERROR" << std::endl;
+  std:: string this_line;
+  std::string filename;
+  while(getline(myfile, this_line)){
+     int file_id, layer_id, phi_id, barrel_id, slot_id, side_id;
+     myfile >> file_id >> layer_id >> phi_id >> barrel_id >> slot_id >> side_id >> filename;
+     if(layer_id == mem_layer && is_barrel == barrel_id && slot_id == slot && phi_id == phi && side_id == side && file_id == dtcId) {
+        break;
+      }
+      if(myfile.eof()) std::cout << "Incorrect Region or Channel " << "DTCID: " << dtcId << " Layer: " << mem_layer << " Barrel: " << is_barrel << " slot: " << slot << " side: " << side << " Phi: " << phi <<std::endl;
+  }
+  return filename;
+
+  
+}
+
+template<class MemType>
+inline void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
+{  
+  //std::cout << "In write mem " << filename << std::endl;
+  std::fstream fout;
+  fout.open(filename, std::ios::app);
+  if(fout.fail()) std::cout << "ERROR" << std::endl;
+  std::string this_line;
+  std::bitset<3> bx(ievt);
+  fout << "BX = " << bx << " Event : " << ievt  << std::endl;
+  //std::cout << "BX = " << bx << " Event : " << ievt  << std::endl;
+  const unsigned int nStubsMem( memory.getEntries(0) );
+  for(unsigned int iMem=0; iMem < nStubsMem; ++iMem){
+    fout << std::setw(2) << std::setfill('0') << std::hex << iMem << " ";
+    std::bitset<36> this_mem(memory.read_mem(0, iMem).raw());
+    for(int iBit=35; iBit >= 0; iBit--){
+      if(iBit == 28 || iBit == 20 || iBit == 3){
+        fout << "|" << this_mem[iBit];
+      }
+      else {
+        fout << this_mem[iBit];
+      }
+    }
+    //dump the full hex version of the memory    
+    fout << " 0x" << std::uppercase << std::hex  << std::setfill('0') << std::setw(9) << this_mem.to_ullong() << std::endl;
+  }
+  fout.close();
+}
+
 // TODO: FIXME or write a new one for binned memories
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label)
 {
   bool truncated = false;
@@ -114,7 +245,7 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 }
 
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label,
                                 bool& truncated, int maxProc = kMaxProc)
 {
@@ -186,7 +317,7 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
 }
 
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareBinnedMemWithFile(const MemType& memory, 
+inline unsigned int compareBinnedMemWithFile(const MemType& memory, 
                                       std::ifstream& fout,
                                       int ievt, const std::string& label,
                                       bool& truncated, int maxProc = kMaxProc)
@@ -264,7 +395,6 @@ unsigned int compareBinnedMemWithFile(const MemType& memory,
   
 }
 
+#endif // TestBenches_FileReadUtility_h
 
-#endif  // FILEREADUTILITY
-
-#endif  // __SYNTHESIS__
+#endif // __SYNTHESIS__
