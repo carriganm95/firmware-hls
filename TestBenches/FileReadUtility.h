@@ -12,10 +12,11 @@
 #include <unistd.h>
 #include <vector>
 #include <bitset>
-
 #include "../TrackletAlgorithm/Constants.h"
+#include <sstream>
+//#include "../TrackerDTC/src/Setup.cc"
 
-bool openDataFile(std::ifstream& file_in, const std::string& file_name)
+inline bool openDataFile(std::ifstream& file_in, const std::string& file_name)
 {
   file_in.open(file_name);
 
@@ -30,7 +31,34 @@ bool openDataFile(std::ifstream& file_in, const std::string& file_name)
   return success;
 }
 
-std::vector<std::string> split(const std::string& s, char delimiter)
+template<class DataType>
+inline void readEventFromFile(DataType& memarray, std::ifstream& fin, int ievt){
+
+  std::string line;
+
+  if (ievt==0) {
+    getline(fin, line);
+  }
+
+  memarray.clear(ievt);
+
+  while (getline(fin, line)) {
+    
+    if (!fin.good()) {
+      return;
+    }
+
+    if (line.find("Event") != std::string::npos) {
+	return;
+    }
+    else {
+      memarray.write_mem_line(ievt,line);
+    }
+    
+  }
+}
+
+inline std::vector<std::string> split(const std::string& s, char delimiter)
 {
   std::vector<std::string> tokens;
   std::string token;
@@ -45,17 +73,23 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 }
 
 template<class MemType>
-void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16)
+inline void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, bool first, int base=16)
 {
   std::string line;
+  
+  //std::cout << " We are in writeMemFromFile " << std::endl;
 
-  if (ievt==0) {
+  // What is this here for? Expecting a header line?  Code returns when hit "Event" so this gets the first line out of the way.
+  //if (ievt==0) {
+  if(first) { 
     getline(fin, line);
   }
   
   memory.clear();
   
   while (getline(fin, line)) {
+  
+    //std::cout << " Read this line from file " << line << std::endl;
     
     if (!fin.good()) {
       return;
@@ -65,9 +99,11 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
       return;
     } else {
       if (split(line,' ').size()==4) {
+       //std::cout << ievt << " Writing to memory: " << line << std::endl;
        memory.write_mem(ievt, line, base);
       } else {
 	const std::string datastr = split(line, ' ').back();
+	//std::cout << ievt << " Writing to memory " << datastr << std::endl;
 	memory.write_mem(ievt, datastr, base);
       }
     }	
@@ -75,10 +111,143 @@ void writeMemFromFile(MemType& memory, std::ifstream& fin, int ievt, int base=16
   
 }
 
+/*  To Do: Check into where this came from?
+template<class MemType>
+inline void getLineFromFile(MemType& memory, std::string filename, int ievt, int base=16){
+
+  std::ifstream myfile;
+  myfile.open(filename);
+  int mem_counter = 0;
+  std::string line;
+  bool isEvent = false;
+
+  while(getline(myfile, line)){
+
+    if(myfile.fail()){
+      std::cout << "ERROR READING INPUT FILE" << std::endl;
+      return;
+    }
+
+    if(isEvent == false){
+      if(line.find("Event") != std::string::npos && line.find(std::to_string(ievt)) != std::string::npos){
+        isEvent = true;
+        continue;
+      }
+
+      else continue;
+    }
+
+    if(isEvent == true){
+
+      if(line.find("Event") != std::string::npos){
+        if(line.find(std::to_string(ievt)) != std::string::npos) continue;
+        isEvent = false;
+        return;
+      }
+      else{
+        std::cout << "isEvent==True and else" << line << std::endl;
+        std::string stub = line.substr(43, 55);
+        std::cout << "Substring: " << stub << std::endl;
+        ap_uint<20> stub_int = std::stoul(stub, nullptr, 16);
+        std::cout << "Dec: " << stub_int << std::endl;
+        InputStub<TRACKER> hMemWord(stub_int);
+        memory.write_mem(0, hMemWord, mem_counter);
+        mem_counter++;
+      }
+    }
+  }
+}
+*/
+
+inline std::string getOutputFile(std::ifstream& myfile, int dtcId, int slot, int side, int mem_layer, int is_barrel, int phi)
+{
+
+//std::string phi_regions[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
+
+  myfile.clear();
+  myfile.seekg(0);
+
+  //Following lines are for creating the mapping
+  /*std::ofstream outfile;
+  outfile.open("outputMem_test.txt", std::ios::app);
+  std::string out_filename = "InputStubs_";
+  if(is_barrel) out_filename += "L" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!is_barrel) out_filename += "D" + std::to_string(mem_layer) + "PHI" + phi_regions[phi];
+  if(!side) out_filename += "_neg";
+  if(slot <= 2) out_filename += "_PS10G_" + std::to_string(slot); 
+  if(slot <= 5 && slot >= 3) out_filename += "_PS5G_" + std::to_string(slot);
+  if(slot >= 6) out_filename += "_2S_" + std::to_string(slot-5);
+  if(mem_layer != 1){
+    if(phi < 2) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  if(mem_layer == 1){
+    if(phi < 4) out_filename += "_A_";
+    else out_filename += "_B_";
+  }
+  out_filename += std::to_string(dtcId) + ".dat"; 
+  outfile << dtcId << " " << mem_layer << " " << phi << " " << is_barrel << " " << slot << " " << side << " " << out_filename <<std::endl;
+  */
+  if(myfile.fail()) std::cout << "ERROR" << std::endl;
+  std:: string this_line;
+  std::string filename;
+  while(getline(myfile, this_line)){
+     int file_id, layer_id, phi_id, barrel_id, slot_id, side_id;
+     myfile >> file_id >> layer_id >> phi_id >> barrel_id >> slot_id >> side_id >> filename;
+     if(layer_id == mem_layer && is_barrel == barrel_id && slot_id == slot && phi_id == phi && side_id == side && file_id == dtcId) {
+        break;
+      }
+      if(myfile.eof()) std::cout << "Incorrect Region or Channel " << "DTCID: " << dtcId << " Layer: " << mem_layer << " Barrel: " << is_barrel << " slot: " << slot << " side: " << side << " Phi: " << phi <<std::endl;
+  }
+  return filename;
+
+  
+}
+
+template<class MemType>
+inline void writeMemToFile(MemType& memory, std::string filename, int &ievt, int base=16)
+{  
+  //std::cout << "In write mem " << filename << std::endl;
+  std::fstream fout;
+  fout.open(filename, std::ios::app);
+  if(fout.fail()) std::cout << "ERROR" << std::endl;
+  std::string this_line;
+  std::bitset<3> bx(ievt);
+  fout << "BX = " << bx << " Event : " << ievt  << std::endl;
+  //std::cout << "BX = " << bx << " Event : " << ievt  << std::endl;
+  const unsigned int nStubsMem( memory.getEntries(0) );
+  for(unsigned int iMem=0; iMem < nStubsMem; ++iMem){
+    fout << std::setw(2) << std::setfill('0') << std::hex << iMem << " ";
+    std::bitset<36> this_mem(memory.read_mem(0, iMem).raw());
+    for(int iBit=35; iBit >= 0; iBit--){
+      if(iBit == 28 || iBit == 20 || iBit == 3){
+        fout << "|" << this_mem[iBit];
+      }
+      else {
+        fout << this_mem[iBit];
+      }
+    }
+    //dump the full hex version of the memory    
+    fout << " 0x" << std::uppercase << std::hex  << std::setfill('0') << std::setw(9) << this_mem.to_ullong() << std::endl;
+  }
+  fout.close();
+}
+
+// TODO: FIXME or write a new one for binned memories
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
+                                int ievt, const std::string& label)
+{
+  bool truncated = false;
+  unsigned int err_count;
+  err_count = compareMemWithFile<MemType,InputBase,OutputBase>(memory,fout,ievt,label,truncated);
+  return err_count;
+}
+
+template<class MemType, int InputBase=16, int OutputBase=16>
+inline unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
                                 int ievt, const std::string& label,
-                                const bool truncated = false, int maxProc = kMaxProc)
+                                bool& truncated, int maxProc = kMaxProc)
 {
   unsigned int err_count = 0;
 
@@ -87,35 +256,45 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
   MemType memory_ref;
   writeMemFromFile<MemType>(memory_ref, fout, ievt, InputBase);
 
-  for (int i = 0; i < memory_ref.getDepth(); ++i) {
-    auto data_ref = memory_ref.read_mem(ievt,i).raw();
-    auto data_com = memory.read_mem(ievt,i).raw();
-    if (i==0) {
-      // If both reference and computed memories are completely empty, skip it
-      if (data_com == 0 && data_ref == 0) break;
-      std::cout << label << ":" << std::endl;
-      std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
-    }
-    // If have reached the end of valid entries in both computed and reference, don't bother printing further
-    if (data_com == 0 && data_ref == 0) continue;
+  // Check if at least one of the memories in comparison is non empty
+  // before spamming the screen
+  if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
+    std::cout << label << ":" << std::endl;
+  }
 
+  ////////////////////////////////////////
+  // compare expected data with those computed and stored in the output memory
+  if (memory.getEntries(ievt)!=0 or memory_ref.getEntries(ievt)!=0)
+    std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
+  
+  for (int i = 0; i < memory_ref.getEntries(ievt); ++i) {
+
+    // Maximum processing steps per event is kMaxProc
+    if (i >= maxProc) {
+      std::cout << "WARNING: Extra data in the reference memory!" << std::endl;
+      std::cout << "Truncation due to maximum number of processing steps per event maxProc = " << std::dec << maxProc << std::endl;
+      truncated = true;
+      break;
+    }
+    
     std::cout << i << "\t";
+
+    auto data_ref = memory_ref.read_mem(ievt,i).raw();
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_ref) << "\t";
     else                 std::cout << std::hex << data_ref << "\t";
     
+    if (i >= memory.getEntries(ievt) ) {
+      // missing entries in the computed memory
+      if (not truncated) err_count++;
+      std::cout << "missing" << std::endl;
+      continue;
+    }
+
+    auto data_com = memory.read_mem(ievt,i).raw();
     if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_com);
     else                 std::cout << std::hex << data_com; // << std::endl;
 
-    // If there is extra entries in reference
-    if (data_com == 0) {
-      std::cout << "\t" << "<=== missing";
-      if (!truncated) err_count++;
-    // If there is extra entries in computed
-    } else if (data_ref == 0) {
-      std::cout << "\t" << "<=== EXTRA";
-      err_count++;
-    // If reference and computed entry are inconsistent
-    } else if (data_com != data_ref) {
+    if (data_com != data_ref) {
       std::cout << "\t" << "<=== INCONSISTENT";
       err_count++;
     }
@@ -123,15 +302,25 @@ unsigned int compareMemWithFile(const MemType& memory, std::ifstream& fout,
     std::cout << std::endl;
   }
   
+  // in case computed memory has extra contents...
+  if (memory.getEntries(ievt) >  memory_ref.getEntries(ievt)) {
+    
+    for (int i = memory_ref.getEntries(ievt); i < memory.getEntries(ievt); ++i) {
+      auto data_extra = memory.read_mem(ievt, i).raw();   
+      std::cout << "missing" << "\t" << std::hex << data_extra << std::endl;
+      err_count++;
+    }
+  }
+
   return err_count;
   
 }
 
 template<class MemType, int InputBase=16, int OutputBase=16>
-unsigned int compareBinnedMemWithFile(const MemType& memory, 
+inline unsigned int compareBinnedMemWithFile(const MemType& memory, 
                                       std::ifstream& fout,
                                       int ievt, const std::string& label,
-                                      const bool truncated = false, int maxProc = kMaxProc)
+                                      bool& truncated, int maxProc = kMaxProc)
 {
   unsigned int err_count = 0;
 
@@ -140,44 +329,67 @@ unsigned int compareBinnedMemWithFile(const MemType& memory,
   MemType memory_ref;
   writeMemFromFile<MemType>(memory_ref, fout, ievt, InputBase);
 
+  // Check if at least one of the memories in comparison is non empty
+  // before spamming the screen
+  if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
+    std::cout << label << ":" << std::endl;
+  }
+  else 
+    return err_count;
+
   ////////////////////////////////////////
   // compare expected data with those computed and stored in the output memory
-  std::cout << label << ":" << std::endl;
   std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
   for ( int j = 0; j < memory_ref.getNBins(); ++j ) {
-    std::cout << "Bin " << std::dec << j << std::endl;
-    for (int i = 0; i < memory_ref.getNEntryPerBin() ; ++i) {
-      auto data_ref = memory_ref.read_mem(ievt,j,i).raw();
-      auto data_com = memory.read_mem(ievt,j,i).raw();
+    auto val = memory_ref.getEntries(ievt,j);
+    std::cout << "Bin " << std::dec << j
+	      << ", n_entries = " << val 
+	      << std::endl;
+    for (int i = 0; i < val ; ++i) {
 
-      // If have reached the end of valid entries in both computed and reference, don't bother printing further
-      if (data_com == 0 && data_ref == 0) continue;
-
+      // Maximum processing steps per event is kMaxProc
+      if (i >= maxProc) {
+	std::cout << "WARNING: Extra data in the reference memory!" << std::endl;
+	std::cout << "Truncation due to maximum number of processing steps per event maxProc = " << std::dec << maxProc << std::endl;
+	truncated = true;
+	break;
+      }
+      
       std::cout << i << "\t";
 
+      auto data_ref = memory_ref.read_mem(ievt,j,i).raw();
       if (OutputBase == 2) std::cout << std::bitset<MemType::getWidth()>(data_ref) << "\t";
       else                 std::cout << std::hex << data_ref << "\t";
     
+      if (i >= memory.getEntries(ievt,j) ) {
+	// missing entries in the computed memory
+	if (not truncated) err_count++;
+	std::cout << "missing" << std::endl;
+	continue;
+      }
+
+      auto data_com = memory.read_mem(ievt,j,i).raw();
       if (OutputBase ==2) std::cout << std::bitset<MemType::getWidth()>(data_com);
       else                std::cout << std::hex << data_com; // << std::endl;
 
-      // If there is extra entries in reference
-      if (data_com == 0) {
-        std::cout << "\t" << "<=== missing";
-        if (!truncated) err_count++;
-      // If there is extra entries in computed
-      } else if (data_ref == 0) {
-        std::cout << "\t" << "<=== EXTRA";
-        err_count++;
-      // If reference and computed entry are inconsistent
-      } else if (data_com != data_ref) {
-        std::cout << "\t" << "<=== INCONSISTENT";
-        err_count++;
+      if (data_com != data_ref) {
+	std::cout << "\t" << "<=== INCONSISTENT";
+	err_count++;
       }
 
       std::cout << std::endl;
-    } // loop over entries in bin
+    } // loop over single bin
+    // in case computed memory has extra contents...
+    if (memory.getEntries(ievt) >  memory_ref.getEntries(ievt)) {
+    
+      for (int i = memory_ref.getEntries(ievt,j); i < memory.getEntries(ievt,j); ++i) {
+	auto data_extra = memory.read_mem(ievt,j, i).raw();   
+	std::cout << "missing" << "\t" << std::hex << data_extra << std::endl;
+	err_count++;
+      }
+    }
   } // loop over bins
+
 
   return err_count;
   

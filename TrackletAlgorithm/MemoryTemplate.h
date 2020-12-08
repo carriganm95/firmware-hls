@@ -17,7 +17,7 @@ class MemoryTemplate
 public:
   typedef typename DataType::BitWidths BitWidths;
   typedef ap_uint<NBIT_BX> BunchXingT;
-  typedef ap_uint<NBIT_ADDR> NEntryT;
+  typedef ap_uint<NBIT_ADDR+1> NEntryT;
   
 protected:
 
@@ -25,6 +25,29 @@ protected:
   NEntryT nentries_[1<<NBIT_BX];                  // number of entries
   
 public:
+
+  MemoryTemplate()
+  {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
+	clear();
+  }
+
+  ~MemoryTemplate(){}
+
+  void clear()
+  {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
+#pragma HLS inline
+  MEM_RST: for (size_t ibx=0; ibx<(1<<NBIT_BX); ++ibx) {
+#pragma HLS UNROLL
+	  nentries_[ibx] = 0;
+	}
+  }
+
+  void clear(BunchXingT bx) {
+#pragma HLS inline
+    nentries_[bx] = 0;
+  }
 
   unsigned int getDepth() const {return (1<<NBIT_ADDR);}
   unsigned int getNBX() const {return (1<<NBIT_BX);}
@@ -38,6 +61,7 @@ public:
 
   DataType read_mem(BunchXingT ibx, ap_uint<NBIT_ADDR> index) const
   {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
 	// TODO: check if valid
 	return dataarray_[ibx][index];
   }
@@ -45,6 +69,7 @@ public:
   template<class SpecType>
   bool write_mem(BunchXingT ibx, SpecType data, int addr_index)
   {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
 #pragma HLS inline
     static_assert(
       std::is_same<DataType, SpecType>::value
@@ -57,9 +82,11 @@ public:
 
   bool write_mem(BunchXingT ibx, DataType data, int addr_index)
   {
+#pragma HLS ARRAY_PARTITION variable=nentries_ complete dim=0
 #pragma HLS inline
     if (addr_index < (1<<NBIT_ADDR)) {
       dataarray_[ibx][addr_index] = data;
+      nentries_[ibx] = addr_index + 1;
       return true;
     } else {
       return false;
@@ -68,41 +95,30 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
-  MemoryTemplate()
-  {
-       clear();
-  }
 
-  ~MemoryTemplate(){}
+  
+   std::string name_;   
+   void setName(std::string name) { name_ = name;}
+   std::string const& getName() const { return name_;}
 
-  void clear()
-  {
-    DataType data("0",16);
-    MEM_RST: for (size_t ibx=0; ibx<(1<<NBIT_BX); ++ibx) {
-      nentries_[ibx] = 0;
-      for (size_t addr=0; addr<(1<<NBIT_ADDR); ++addr) {
-        write_mem(ibx,data,addr);
-      }
-    }
-  }
-
+   unsigned int iSector_;   
+   void setSector(unsigned int iS) { iSector_ = iS;}
+   unsigned int getSector() const { return iSector_;}     
+   
   // write memory from text file
   bool write_mem(BunchXingT ibx, const char* datastr, int base=16)
   {
 	DataType data(datastr, base);
-	int nent = nentries_[ibx]; 
-	bool success = write_mem(ibx, data, nent);
-	if (success) nentries_[ibx] ++;
-        return success;
+        int nent = nentries_[ibx];
+	// std::cout << "write_mem " << data << std::endl;
+	return write_mem(ibx, data, nent);
   }
-
   bool write_mem(BunchXingT ibx, const std::string datastr, int base=16)
   {
-	DataType data(datastr.c_str(), base);
-	int nent = nentries_[ibx];
-	bool success = write_mem(ibx, data, nent);
-	if (success) nentries_[ibx] ++;
-        return success;
+    DataType data(datastr.c_str(), base);
+        int nent = nentries_[ibx];
+	// std::cout << "write_mem " << data << std::endl;
+	return write_mem(ibx, data, nent);
   }
 
   // print memory contents
