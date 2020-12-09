@@ -28,7 +28,7 @@ constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
 // Note: can't use 0 if we don't have any memories of a certain type. Use 1.
-constexpr int maxASCopies(6); // Allstub memory
+constexpr int maxAllCopies(6); // Allstub memory
 constexpr int maxTEICopies(5); // TE Inner memories
 constexpr int maxOLCopies(3); // TE Inner Overlap memories
 constexpr int maxTEOCopies(1); // TE Outer memories
@@ -88,7 +88,7 @@ void VMRouterTop(BXType bx,
 	const InputStubMemory<inputType> inputStub[numInputs],
 
 	// Output memories
-	AllStubMemory<outputType> allStub[maxASCopies],
+	AllStubMemory<outputType> allStub[maxAllCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nvmME],
 	VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies],
 	VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies]

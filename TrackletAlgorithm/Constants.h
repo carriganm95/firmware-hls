@@ -111,4 +111,8 @@ namespace TF {
 // Global BX type
 typedef ap_uint<kNBits_BX> BXType;  // temporary definition. need to be revisited
 
+// FPGA constants 
+constexpr unsigned kBRAMwidth = 36; 
+constexpr int kNBits_DTC = 38; 
+
 #endif

@@ -585,7 +585,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		// rzbitstables, aka binlookup in emulation
 		const int rzbitsInnerTable[], const int rzbitsOverlapTable[], const int rzbitsOuterTable[],
 		// bendcut tables
-		const ap_uint<BendCutTableSize> bendCutInnerTable[], const ap_uint<BendCutTableSize> bendCutOverlapTable[], const ap_uint<BendCutTableSize> bendCutOuterTable[],
+		const ap_uint<BendCutTableSize>* bendCutInnerTable[], const ap_uint<BendCutTableSize>* bendCutOverlapTable[], const ap_uint<BendCutTableSize>* bendCutOuterTable[],
 		// Input memories
 		const ap_uint<maskISsize>& maskIS,
 		const InputStubMemory<InType> inputStubs[],
