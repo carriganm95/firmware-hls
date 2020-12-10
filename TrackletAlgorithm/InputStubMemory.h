@@ -194,6 +194,29 @@ public:
     data_.range(kISBendMSB,kISBendLSB) = bend;
   }
 
+  std::string getBitStr() 
+  {
+     std::string str = decodeToBits(getR(),InputStubBase<ISType>::kISRSize);
+     str += "|"+decodeToBits(getZ(),InputStubBase<ISType>::kISZSize);
+     str += "|"+decodeToBits(getPhi(),InputStubBase<ISType>::kISPhiSize);
+//     str += "|"+decodeToBits(getAlpha(),InputStubBase<ISType>::kISAlphaSize);
+     str += "|alpha missing";
+     str += "|"+decodeToBits(getBend(),InputStubBase<ISType>::kISBendSize);
+     return str;
+  }
+
+  // TO DO: This belongs in some sort of helper class.
+  std::string decodeToBits(unsigned int field, unsigned int size) const 
+  {
+     
+    unsigned int valtmp = field;
+    std::string str = "";
+    for(unsigned int i=0; i< size; i++) {
+      str = ((valtmp & 1) ? "1" : "0") + str;
+      valtmp >>= 1;
+    }
+    return str;
+  }
 private:
 
   InputStubData data_;

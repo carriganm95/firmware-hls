@@ -150,7 +150,7 @@ public:
 	  }
 	}
   }
-
+   
   static constexpr int getWidth() {return DataType::getWidth();}
   
 #endif
