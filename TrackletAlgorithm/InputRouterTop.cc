@@ -1,186 +1,32 @@
 #include "InputRouterTop.h"
 
 void InputRouterTop( const BXType hBx
-  , const ap_uint<6> hInputLinkId 
-  , const ap_uint<kLINKMAPwidth> kInputLinkLUT[kSizeLinkTable]
-  , const int kPhiCorrtable_L1[kSizePhiCorrTablePS]
-  , const int kPhiCorrtable_L2[kSizePhiCorrTablePS]
-  , const int kPhiCorrtable_L3[kSizePhiCorrTablePS]
-  , const int kPhiCorrtable_L4[kSizePhiCorrTable2S]
-  , const int kPhiCorrtable_L5[kSizePhiCorrTable2S]
-  , const int kPhiCorrtable_L6[kSizePhiCorrTable2S]
+  , const ap_uint<6> hInputLinkId // link id 
+  , const ap_uint<kLINKMAPwidth> hLinkWord // input link LUT 
+  , const ap_uint<kBINMAPwidth> hPhBnWord  // n phi bins LUT 
+  , const ap_uint<kNMEMwidth> hNmemories // number of memories filled by each IR module
+  , const int kPhiCorrtable_L1[cNEntriesLUT] // corrections frst brl lyr  
+  , const int kPhiCorrtable_L2[cNEntriesLUT] // corrections scnd brl lyr   
+  , const int kPhiCorrtable_L3[cNEntriesLUT] // corrections thrd brl lyr  
   , ap_uint<kNBits_DTC> hInputStubs[kMaxStubsFromLink]
-  , DTCStubMemory hOutputStubs[kNIRMemories]) {
+  , DTCStubMemory hOutputStubs[cNMemories]) {
 
-#pragma HLS clock domain = slow_clock
-#pragma HLS interface ap_none port = hInputLinkId
-#pragma HLS interface ap_memory port = kInputLinkLUT
-#pragma HLS stream variable = hInputStubs depth = 1
+  #pragma HLS clock domain = slow_clock
+  #pragma HLS stream variable = hInputStubs depth = 1
+ 
+  #ifndef __SYNTHESIS__
+    std::cout << "IR module reading out link " << +hInputLinkId
+      << " is going to fill "
+      <<  hNmemories
+      << " memories\n";
+  #endif
 
-  ap_uint<kLINKMAPwidth> hLinkWord = kInputLinkLUT[hInputLinkId % 12];
-  ap_uint<3> hNLayers = hLinkWord.range(kLINKMAPwidth - 1, kLINKMAPwidth - 3);
-  ap_uint<1> hIs2S = hLinkWord.range(kLINKMAPwidth - 4, kLINKMAPwidth - 4);
-#ifndef __SYNTHESIS__
-  if (IR_DEBUG) {
-    std::cout << "Link# " << +hInputLinkId 
-              << " Link Word is " << std::bitset<kLINKMAPwidth>(hLinkWord)
-              << " - Is2S bit is set to " << hIs2S << "\n";
-  }
-#endif
-
-  // prepare variable needed
-  // to be able to move through
-  // the array of memories
-  unsigned int cNMemories = 0;
-  ap_uint<4> hNPhiBns[kNLayers];  // at most 4 layers
-  ap_uint<1> hBrlBits[kNLayers];  // at most 4 layers
-#pragma HLS array_partition variable = hNPhiBns complete
-#pragma HLS array_partition variable = hBrlBits complete
-LOOP_GetNPhiBns:
-  for (unsigned int cIndx = 0; cIndx < kNLayers; cIndx++) {
-#pragma HLS unroll
-    if (cIndx < hNLayers) {
-      ap_uint<4> hWrd = hLinkWord.range(4 * cIndx + 3, 4 * cIndx);
-      ap_uint<1> hIsBrl = hWrd.range(0, 0);
-      ap_uint<3> hLyrId = hWrd.range(3, 1);
-      hNPhiBns[cIndx] = ((hIs2S == 0) && hLyrId == 1 && hIsBrl) ? 8 : 4;
-      hBrlBits[cIndx] = hIsBrl;
-#ifndef __SYNTHESIS__
-      if (IR_DEBUG) {
-        std::cout << "Lyr#" << cIndx << " encoded word " << std::bitset<4>(hWrd)
-                  << " - " << hNPhiBns[cIndx] << " phi bins"
-                  << " -- layer id is " << +hLyrId 
-                  << "\n";
-      }
-#endif
-      cNMemories += (unsigned int)(hNPhiBns[cIndx]);
-    }
-  }
-// clear memories and stub counter
-ap_uint<8> hNStubs[kNIRMemories];
-#pragma HLS array_partition variable = hNStubs complete
-LOOP_ClearOutputMemories:
-  for (unsigned int cMemIndx = 0; cMemIndx < kNIRMemories; cMemIndx++) {
-#pragma HLS unroll
-    hNStubs[cMemIndx] = 0;
-    (&hOutputStubs[cMemIndx])->clear(hBx);
-#ifndef __SYNTHESIS__
-    if (IR_DEBUG) {
-    std::cout << ".........."
-      << +(&hOutputStubs[cMemIndx])->getEntries(hBx) 
-      << " entries... "
-      << "\n";
-    }
-#endif
-  }
-
-LOOP_ProcessIR:
-  for (int cStubCounter = 0; cStubCounter < kMaxStubsFromLink; cStubCounter++) {
-#pragma HLS pipeline II = 1
-#pragma HLS PIPELINE rewind
-    // decode stub
-    // check which memory
-    ap_uint<kNBits_DTC> hStub = hInputStubs[cStubCounter];
-    if (hStub == 0)
-      continue;
-
-    // decode link wrd for this layer
-    ap_uint<3> hEncLyr = ap_uint<3>(hStub.range(2, 1) & 0x3);
-    ap_uint<4> hWrd = hLinkWord.range(4 * hEncLyr + 3, 4 * hEncLyr);
-    ap_uint<1> hIsBrl = hWrd.range(1, 0);
-    ap_uint<3> hLyrId = hWrd.range(3, 1);
-
-    ap_uint<8> hPhiMSB = AllStub<BARRELPS>::kASPhiMSB+3;
-    ap_uint<8> hPhiLSB = AllStub<BARRELPS>::kASPhiLSB+3;
-    if (hIsBrl == 1) {
-        if (hIs2S == 0) {
-          hPhiMSB = AllStub<BARRELPS>::kASPhiMSB+3;
-          hPhiLSB = AllStub<BARRELPS>::kASPhiLSB+3;
-          ap_uint<AllStub<BARRELPS>::kASPhiSize> hPhi = hStub.range(hPhiMSB, hPhiLSB) + (1 << (AllStub<BARRELPS>::kASPhiSize- 1) );
-          hStub.range(hPhiMSB, hPhiLSB) = hPhi;
-        }
-        else{
-          hPhiMSB = AllStub<BARREL2S>::kASPhiMSB+3;
-          hPhiLSB = AllStub<BARREL2S>::kASPhiLSB+3;
-          ap_uint<AllStub<BARREL2S>::kASPhiSize> hPhi = hStub.range(hPhiMSB, hPhiLSB) + (1 << (AllStub<BARREL2S>::kASPhiSize- 1) );
-          hStub.range(hPhiMSB, hPhiLSB) = hPhi;
-        }
-    }
-    else {
-        if (hIs2S == 0) {
-          hPhiMSB = AllStub<DISKPS>::kASPhiMSB+3;
-          hPhiLSB = AllStub<DISKPS>::kASPhiLSB+3;
-          ap_uint<AllStub<DISKPS>::kASPhiSize> hPhi = hStub.range(hPhiMSB, hPhiLSB) + (1 << (AllStub<DISKPS>::kASPhiSize- 1) );
-          hStub.range(hPhiMSB, hPhiLSB) = hPhi;
-        }
-        else{
-          hPhiMSB = AllStub<DISK2S>::kASPhiMSB+3;
-          hPhiLSB = AllStub<DISK2S>::kASPhiLSB+3;
-          ap_uint<AllStub<DISK2S>::kASPhiSize> hPhi = hStub.range(hPhiMSB, hPhiLSB) + (1 << (AllStub<DISK2S>::kASPhiSize- 1) );
-          hStub.range(hPhiMSB, hPhiLSB) = hPhi;
-        }
-    }
-
-
-    ap_uint<kBRAMwidth> hStbWrd = hStub.range(kBRAMwidth + 3 - 1, 3);
-
-    // get memory word
-    DTCStub hMemWord(hStbWrd);
-    
-    // get phi bin
-    ap_uint<3> hPhiBn;
-    if (hIsBrl == 1) {
-      if (hIs2S == 0)
-        GetPhiBinBrl<BARRELPS, kSizePhiCorrTablePS>(hStub, kPhiCorrtable_L1, kPhiCorrtable_L2,
-                                   kPhiCorrtable_L3, hLyrId, hPhiBn);
-      else
-        GetPhiBinBrl<BARREL2S, kSizePhiCorrTable2S>(hStub, kPhiCorrtable_L4, kPhiCorrtable_L5,
-                                    kPhiCorrtable_L6, hLyrId, hPhiBn);
-    } else {
-      if (hIs2S == 0)
-        GetPhiBinDsk<DISKPS>(hStub, hLyrId, hPhiBn);
-      else
-        GetPhiBinDsk<DISK2S>(hStub, hLyrId, hPhiBn);
-    }
-
-    // update index
-    unsigned int cIndx = 0;
-  LOOP_UpdateMemIndx:
-    for (int cLyr = 0; cLyr < kNLayers; cLyr++) {
-#pragma HLS unroll
-      // update index
-      cIndx += (cLyr < hEncLyr) ? (unsigned int)(hNPhiBns[cLyr]) : 0;
-    }
-    
-    // write to memory
-    unsigned int cMemIndx = cIndx + hPhiBn;
-    // std::cout << "Indices : " << cMemIndx << " " << cNMemories << " " << cIndx << " " << hPhiBn << " " << hIsBrl << " " << hIs2S << std::endl;
-    // if ( cMemIndx >= cNMemories ) continue;
-    assert(cMemIndx < cNMemories);
-    ap_uint<8> hEntries = hNStubs[cMemIndx];
-#ifndef __SYNTHESIS__
-    if (IR_DEBUG) {
-      std::cout << "\t.. Stub : " << std::hex << hStbWrd << std::dec
-                << " [ EncLyrId " << hEncLyr << " ] "
-                << "[ LyrId " << hLyrId << " ] IsBrl bit " << +hIsBrl
-                << " PhiBn#" << +hPhiBn << " Mem#" << cMemIndx
-                << " Current number of entries " << +hEntries << "\n";
-    }
-#endif
-    (&hOutputStubs[cMemIndx])->write_mem(hBx, hMemWord, hEntries);
-    hNStubs[cMemIndx] = hEntries + 1;
-  }
-
-#ifndef __SYNTHESIS__
-  if (IR_DEBUG) {
-    std::cout << "After processing...\n";
-    for (unsigned int cMemIndx = 0; cMemIndx < kNIRMemories; cMemIndx++) {
-      std::cout << ".........."
-        << +(&hOutputStubs[cMemIndx])->getEntries(hBx) 
-        << " entries... "
-        << "\n";
-    }
-  }
-#endif
-
+  InputRouter<cNMemories,cNEntriesLUT>( hBx
+      , hLinkWord
+      , hPhBnWord
+      , kPhiCorrtable_L1
+      , kPhiCorrtable_L2
+      , kPhiCorrtable_L3
+      , hInputStubs
+      , hOutputStubs);
 }

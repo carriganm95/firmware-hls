@@ -2,19 +2,28 @@
 #define TrackletAlgorithm_InputRouterTop_h
 
 #include "InputRouter.h"
-#include "DTCStubMemory.h"
+
+
+// at the moment I'm changing this for each link 
+// is that really the only way to do this? 
+
+// only for PS10G_1_A for now 
+// other cases to be added 
+// when I have final link map
+constexpr unsigned int cNMemories = 16; 
+constexpr unsigned int cNEntriesLUT = kSizePhiCorrTablePS;
 
 void InputRouterTop( const BXType hBx
-	, const ap_uint<6> hInputLinkId 
-	, const ap_uint<kLINKMAPwidth> kInputLinkLUT[kSizeLinkTable]
-	, const int kPhiCorrtable_L1[kSizePhiCorrTablePS]
-	, const int kPhiCorrtable_L2[kSizePhiCorrTablePS]
-	, const int kPhiCorrtable_L3[kSizePhiCorrTablePS]
-	, const int kPhiCorrtable_L4[kSizePhiCorrTable2S]
-	, const int kPhiCorrtable_L5[kSizePhiCorrTable2S]
-	, const int kPhiCorrtable_L6[kSizePhiCorrTable2S]
-	, ap_uint<kNBits_DTC> hInputStubs[kMaxStubsFromLink]
-	, DTCStubMemory hOutputStubs[kNIRMemories]);
+	, const ap_uint<6> hInputLinkId // link id 
+	, const ap_uint<kLINKMAPwidth> kInputLink // input link LUT 
+  	, const ap_uint<kBINMAPwidth> kNPhiBns  // n phi bins LUT 
+  	, const ap_uint<kNMEMwidth> kLinkNMemories // number of memories filled by each IR module
+  	, const int kPhiCorrtable_L1[] // corrections frst brl lyr  
+	, const int kPhiCorrtable_L2[] // corrections scnd brl lyr  
+	, const int kPhiCorrtable_L3[] // corrections thrd brl lyr   
+	, ap_uint<kNBits_DTC> hInputStubs[kMaxStubsFromLink]//input stubs 
+	, DTCStubMemory hOutputStubs[]);//output memories 
+
 
 #endif
 
