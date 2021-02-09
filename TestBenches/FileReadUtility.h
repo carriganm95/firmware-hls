@@ -323,7 +323,6 @@ inline unsigned int compareBinnedMemWithFile(const MemType& memory,
                                       bool& truncated, int maxProc = kMaxProc)
 {
   unsigned int err_count = 0;
-
   ////////////////////////////////////////
   // Read from file
   MemType memory_ref;
@@ -331,16 +330,16 @@ inline unsigned int compareBinnedMemWithFile(const MemType& memory,
 
   // Check if at least one of the memories in comparison is non empty
   // before spamming the screen
-  if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
-    std::cout << label << ":" << std::endl;
-  }
-  else 
-    return err_count;
+  //if (memory_ref.getEntries(ievt) or memory.getEntries(ievt)) {
+  std::cout << label << ":" << std::endl;
+  //}
+  //else 
+  //  return err_count;
 
   ////////////////////////////////////////
   // compare expected data with those computed and stored in the output memory
   std::cout << "index" << "\t" << "reference" << "\t" << "computed" << std::endl;
-  for ( int j = 0; j < memory_ref.getNBins(); ++j ) {
+  for (unsigned int j = 0; j < memory_ref.getNBins(); ++j ) {
     auto val = memory_ref.getEntries(ievt,j);
     std::cout << "Bin " << std::dec << j
 	      << ", n_entries = " << val 
