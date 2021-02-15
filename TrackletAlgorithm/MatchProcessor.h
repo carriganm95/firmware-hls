@@ -12,7 +12,7 @@
 #include "AllProjectionMemory.h"
 #include "FullMatchMemory.h"
 #include "MatchEngineUnit.h"
-#include "hls_math.h"
+//#include "hls_math.h"
 #include <iostream>
 #include <fstream>
 #include <bitset>
@@ -484,34 +484,42 @@ void MatchCalculator(BXType bx,
       switch (projseed) {
       case 0:
       fullmatch[0].write_mem(bx,bestmatch,nmcout1);//(newtracklet && goodmatch==true && projseed==0)); // L1L2 seed
+      //std::cout << "Best Match: 1" << std::hex << bestmatch.raw() << std::endl;
       nmcout1++;
       break;
       case 1:
       fullmatch[1].write_mem(bx,bestmatch,nmcout2);//(newtracklet && goodmatch==true && projseed==1)); // L3L4 seed
+      //std::cout << "Best Match: 2" << std::hex << bestmatch.raw() << std::endl;
       nmcout2++;
       break;
       case 2:
       fullmatch[2].write_mem(bx,bestmatch,nmcout3);//(newtracklet && goodmatch==true && projseed==2)); // L5L6 seed
+      //std::cout << "Best Match 3: " << std::hex << bestmatch.raw() << std::endl;
       nmcout3++;
       break;
       case 3:
       fullmatch[3].write_mem(bx,bestmatch,nmcout4);//(newtracklet && goodmatch==true && projseed==3)); // D1D2 seed
+      //std::cout << "Best Match 4: " << std::hex << bestmatch.raw() << std::endl;
       nmcout4++;
       break;
       case 4:
       fullmatch[4].write_mem(bx,bestmatch,nmcout5);//(newtracklet && goodmatch==true && projseed==4)); // D3D4 seed
+      //std::cout << "Best Match 5: " << std::hex << bestmatch.raw() << std::endl;
       nmcout5++;
       break;
       case 5:
       fullmatch[5].write_mem(bx,bestmatch,nmcout6);//(newtracklet && goodmatch==true && projseed==5)); // L1D1 seed
+      //std::cout << "Best Match 6: " << std::hex << bestmatch.raw() << std::endl;      
       nmcout6++;
       break;
       case 6:
       fullmatch[6].write_mem(bx,bestmatch,nmcout7);//(newtracklet && goodmatch==true && projseed==6)); // L2D1 seed
+      //std::cout << "Best Match 7: " << std::hex << bestmatch.raw() << std::endl;
       nmcout7++;
       break;
       case 7:
       fullmatch[7].write_mem(bx,bestmatch,nmcout8);//(newtracklet && goodmatch==true && projseed==7)); // L2D1 seed
+      //std::cout << "Best Match 8: " << std::hex << bestmatch.raw() << std::endl;
       nmcout8++;
       break;
       }
@@ -575,17 +583,19 @@ void MatchProcessor(BXType bx,
   bool table[(L<4)?256:512]; //FIXME Need to figure out how to replace 256 with meaningful const.
   readTable<L>(table);
   
-  // reset output memories
-  /*
-  fullmatch[0].clear(bx);
-  fullmatch[1].clear(bx);
-  fullmatch[2].clear(bx);
-  fullmatch[3].clear(bx);
-  fullmatch[4].clear(bx);
-  fullmatch[5].clear(bx);
-  fullmatch[6].clear(bx);
-  fullmatch[7].clear(bx);
-  */
+  /*// reset output memories
+  
+  fullmatch[0].clear();
+  fullmatch[1].clear();
+  fullmatch[2].clear();
+  fullmatch[3].clear();
+  fullmatch[4].clear();
+  fullmatch[5].clear();
+  fullmatch[6].clear();
+  fullmatch[7].clear();*/
+  
+
+  std::cout << "In the Match Processor Module................" << std::endl;
 
   // initialization:
   // check the number of entries in the input memories
@@ -619,7 +629,7 @@ void MatchProcessor(BXType bx,
 //#pragma HLS resource variable=writeindex core=RAM_2P_LUTRAM
 #pragma HLS ARRAY_PARTITION variable=writeindex complete dim=0
 //#pragma HLS dependence variable=writeindex inter false
-  for(int i = 0; i < kNBitsBuffer; ++i) {
+  for(unsigned int i = 0; i < kNBitsBuffer; ++i) {
     #pragma HLS unroll
     writeindex[i] = 0;
   }
@@ -671,7 +681,7 @@ void MatchProcessor(BXType bx,
 #pragma HLS ARRAY_PARTITION variable=tprojarray complete dim=0
 #pragma HLS dependence variable=istub inter false
 //#pragma HLS ARRAY_PARTITION variable=projbuffer complete dim=1
-  PROC_LOOP: for (int istep = 0; istep < kMaxProc-LoopItersCut; ++istep) {
+  PROC_LOOP: for (unsigned int istep = 0; istep < kMaxProc-LoopItersCut; ++istep) {
 #pragma HLS PIPELINE II=1 //rewind
     ap_uint<kNBitsBuffer> writeindextmp;
     //#pragma HLS resource variable=writeindextmp core=RAM_2P_LUTRAM
@@ -698,7 +708,7 @@ void MatchProcessor(BXType bx,
        projdata, nproj);
 
 
-    bool moreproj=iproj<nproj;
+    //bool moreproj=iproj<nproj;
 
     if (validin) {
       auto iphiproj = projdata.getPhi();
@@ -789,7 +799,7 @@ void MatchProcessor(BXType bx,
       if (buffernotfull){
         auto const iprojtmp=iproj;
         iproj++;
-        moreproj=iproj<nproj;
+        //moreproj=iproj<nproj;
         if(iproj>=nproj) iproj=0;
 
         //The first and last zbin the projection points to
@@ -885,7 +895,7 @@ void MatchProcessor(BXType bx,
 //#pragma HLS dependence variable=matchenginetmp intra false
 #pragma HLS dependence variable=matchenginetmp inter RAW true
 //#pragma HLS dependence variable=matchengine inter RAW true
-    MEU_prefetch: for(int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
+    MEU_prefetch: for(unsigned int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
       #pragma HLS unroll
       matchenginetmp[iMEU] = matchengine[iMEU];
     }
@@ -893,7 +903,7 @@ void MatchProcessor(BXType bx,
 */
     int currentMEU = -1;
     bool ready = false;
-    MEU_LOOP: for(int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
+    MEU_LOOP: for(unsigned int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
       #pragma HLS unroll
       auto &meu = matchenginetmp[iMEU];
       bool idle = meu.idle();
@@ -929,15 +939,15 @@ void MatchProcessor(BXType bx,
                    nmcout1, nmcout2, nmcout3, nmcout4, nmcout5, nmcout6, nmcout7, nmcout8,
                    fullmatch);
       } //end MC if
-
-    MEU_update: for(int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
+    
+    MEU_update: for(unsigned int iMEU = 0; iMEU < kNMatchEngines; ++iMEU) {
       #pragma HLS unroll
       matchengine[iMEU] = matchenginetmp[iMEU];
     }
     /*
     */
   } //end loop
-
+  
 
 } // end MatchProcessor()
 

@@ -60,6 +60,7 @@ public:
 #pragma HLS inline
     if (addr_index < (1<<NBIT_ADDR)) {
       dataarray_[ibx][addr_index] = data;
+      // Adding nentries steps
       return true;
     } else {
       return false;
