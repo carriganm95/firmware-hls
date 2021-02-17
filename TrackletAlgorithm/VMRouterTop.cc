@@ -37,7 +37,7 @@ void VMRouterTop(BXType bx,
 	// Only used by layers.
 	// Indexed using phi and bend bits
 	static const int phicorrtable[] =
-#include "../emData/VMR/tables/VMPhiCorrL1.tab"
+#include "../emData/VMR/tables/VMPhiCorrL1.txt"
 	;
 
 	// LUT with the Z/R bits for TE memories
