@@ -2,6 +2,9 @@
 #define TrackletAlgorithm_Constants_h
 
 #include "ap_int.h"
+#include "Settings.h"
+
+using namespace trklet;
 
 // Inline function to convert floating point values to integers, given a
 // digitization constant. The 1.0e-1 is a fudge factor needed to get the
@@ -76,8 +79,8 @@ constexpr double krprojdisk = 0.0585938;
 constexpr double krprojderdisk = 0.0078125;
 
 // detector constants
-constexpr int N_LAYER = 6; // # of barrel layers assumed
-constexpr int N_DISK = 5; // # of endcap disks assumed
+//constexpr int N_LAYER = trklet::N_LAYER; // # of barrel layers assumed
+//constexpr int N_DISK = trklet::N_DISK; // # of endcap disks assumed
 constexpr double bfield = 3.8112; // T
 constexpr int rmean[N_LAYER] = { 851, 1269, 1784, 2347, 2936, 3697 };
 constexpr int zmean[N_DISK] = { 2239, 2645, 3163, 3782, 4523 };
