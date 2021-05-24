@@ -85,7 +85,7 @@ static const int kMSBLyrBts = kNBits_DTC - 2;//2;
 // Get the corrected phi, i.e. phi at the average radius of the barrel
 // Corrected phi is used by ME and TE memories in the barrel
 template<regionType InType>
-inline typename AllStub<InType>::ASPHI getPhiCorr(
+inline typename AllStub<InType>::ASPHI getIRPhiCorr(
 		const typename AllStub<InType>::ASPHI phi,
 		const typename AllStub<InType>::ASR r,
 		const typename AllStub<InType>::ASBEND bend, const int phicorrtable[]) 
@@ -223,7 +223,7 @@ void InputRouter( const BXType bx
 	  {
 	  	auto cOffset = (hLyrId == kFrstPSBrlLyr) ? kNbitsPhiBinsPSL1 : kNbitsPhiBinsTkr; 
 	  	AllStub<BARRELPS> hAStub(hStub.range(kNBits_DTC-1,0));
-		auto hPhiCorrected = getPhiCorr<BARRELPS>(hAStub.getPhi(), hAStub.getR(), hAStub.getBend(), cLUT); 
+		auto hPhiCorrected = getIRPhiCorr<BARRELPS>(hAStub.getPhi(), hAStub.getR(), hAStub.getBend(), cLUT); 
 		auto hPhiBn = hPhiCorrected.range(hPhiCorrected.length()-1, hPhiCorrected.length()-cOffset);
 	  	cIndxThisBn =  hPhiBn;
 	  }
@@ -237,7 +237,7 @@ void InputRouter( const BXType bx
 	  else if(  hIsBrl == 1)
 	  {
 	  	AllStub<BARREL2S> hAStub(hStub.range(kNBits_DTC-1,0));
-	  	auto hPhiCorrected = getPhiCorr<BARREL2S>(hAStub.getPhi(), hAStub.getR(), hAStub.getBend(), cLUT); 
+	  	auto hPhiCorrected = getIRPhiCorr<BARREL2S>(hAStub.getPhi(), hAStub.getR(), hAStub.getBend(), cLUT); 
 		auto hPhiBn = hPhiCorrected.range(hPhiCorrected.length()-1, hPhiCorrected.length()-kNbitsPhiBinsTkr);
 	  	cIndxThisBn = hPhiBn;
 	  }

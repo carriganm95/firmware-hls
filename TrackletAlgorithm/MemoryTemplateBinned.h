@@ -113,6 +113,15 @@ public:
     return tokens;
   }
 
+
+  std::string name_;   
+  void setName(std::string name) { name_ = name;}
+  std::string const& getName() const { return name_;}
+
+  unsigned int iSector_;   
+  void setSector(unsigned int iS) { iSector_ = iS;}
+  unsigned int getSector() const { return iSector_;}  
+
   // write memory from text file
   bool write_mem(BunchXingT bx, const std::string& line, int base=16)
   {

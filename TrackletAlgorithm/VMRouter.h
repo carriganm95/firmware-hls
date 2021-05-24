@@ -25,6 +25,7 @@
 #include "InputStubMemory.h"
 #include "AllStubMemory.h"
 #include "VMStubMEMemory.h"
+#include "VMStubMEMemoryCM.h"
 #include "VMStubTEInnerMemory.h"
 #include "VMStubTEOuterMemory.h"
 

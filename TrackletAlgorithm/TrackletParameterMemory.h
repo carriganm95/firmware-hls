@@ -116,6 +116,30 @@ public:
   void setRinv(const RINVPAR rinv) {
     data_.range(kTParRinvMSB,kTParRinvLSB) = rinv;
   }
+
+  std::string getBitStr() {
+
+     std::string str = decodeToBits(getStubIndexInner(),kTParStubIndexInnerMSB-kTParStubIndexInnerLSB+1);
+     str += "|"+decodeToBits(getStubIndexOuter(),kTParStubIndexOuterMSB-kTParStubIndexOuterLSB+1);
+     str += "|"+decodeToBits(getRinv(),kTParRinvSize);
+     str += "|"+decodeToBits(getPhi0(),kTParPhi0Size);
+     str += "|"+decodeToBits(getZ0(),kTParZ0Size);
+     str += "|"+decodeToBits(getT(),kTParTSize);
+     return str;
+  }
+
+  // TO DO: This belongs in some sort of helper class.
+  std::string decodeToBits(unsigned int field, unsigned int size) const 
+  {
+
+    unsigned int valtmp = field;
+    std::string str = "";
+    for(unsigned int i=0; i< size; i++) {
+      str = ((valtmp & 1) ? "1" : "0") + str;
+      valtmp >>= 1;
+    }
+    return str;
+  }  
   
 private:
   
