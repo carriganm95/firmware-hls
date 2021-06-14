@@ -8,7 +8,7 @@
 #include "CandidateMatchMemory.h"
 
 // HLS Headers
-#include "hls_math.h"
+//#include "hls_math.h"
 
 // STL Headers
 #include <iostream>
