@@ -11,7 +11,7 @@
 #include "AllProjectionMemory.h"
 #include "FullMatchMemory.h"
 
-#include <cassert>
+//#include <cassert>
 
 #include <iostream>
 #include <fstream>

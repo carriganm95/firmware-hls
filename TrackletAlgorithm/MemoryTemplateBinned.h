@@ -169,7 +169,7 @@ public:
 
   static constexpr int getWidth() {return DataType::getWidth();}
 
-  static std::string decodeToBits(unsigned int field, unsigned int size) {
+  /*static std::string decodeToBits(unsigned int field, unsigned int size) {
     unsigned int valtmp = field;
     std::string str = "";
     for(unsigned int i=0; i< size; i++) {
@@ -177,7 +177,7 @@ public:
       valtmp >>= 1;
     }
     return str;
-  }
+  }*/
 #endif
 
 #ifdef CMSSW_GIT_HASH

@@ -137,10 +137,19 @@ public:
 
 #ifdef CMSSW_GIT_HASH
   std::string getBitStr() const {
-    std::string str = 
-      MemoryTemplateBinnedCM<VMStubMECM<VMSMEType>, 1, 4+RZSize+PhiRegSize, RZSize+PhiRegSize, NCOPY>::decodeToBits(getIndex(),VMStubMECMBase<VMSMEType>::kVMSMEIDSize);
-    str += "|"+MemoryTemplateBinnedCM<VMStubMECM<VMSMEType>, 1, 4+RZSize+PhiRegSize, RZSize+PhiRegSize, NCOPY>decodeToBits(getBend(),VMStubMECMBase<VMSMEType>::kVMSMEBendSize);
-    str += "|"+MemoryTemplateBinnedCM<VMStubMECM<VMSMEType>, 1, 4+RZSize+PhiRegSize, RZSize+PhiRegSize, NCOPY>decodeToBits(getFineZ(),VMStubMECMBase<VMSMEType>::kVMSMEFineZSize);
+    std::string str = decodeToBits(getIndex(),VMStubMECMBase<VMSMEType>::kVMSMEIDSize);
+    str += "|"+decodeToBits(getBend(),VMStubMECMBase<VMSMEType>::kVMSMEBendSize);
+    str += "|"+decodeToBits(getFineZ(),VMStubMECMBase<VMSMEType>::kVMSMEFineZSize);
+    return str;
+  }
+
+  std::string decodeToBits(unsigned int field, unsigned int size) const {
+    unsigned int valtmp = field;
+    std::string str = "";
+    for(unsigned int i=0; i< size; i++) {
+      str = ((valtmp & 1) ? "1" : "0") + str;
+      valtmp >>= 1;
+    }
     return str;
   }
 #endif

@@ -143,6 +143,16 @@ public:
     str += "|"+MemoryTemplateBinned<VMStubME<VMSMEType>, 3, kNBits_MemAddr, NBIT_BIN>::decodeToBits(getFineZ(),VMStubMEBase<VMSMEType>::kVMSMEFineZSize);
     return str;
   }
+
+  std::string decodeToBits(unsigned int field, unsigned int size) const {
+    unsigned int valtmp = field;
+    std::string str = "";
+    for(unsigned int i=0; i< size; i++) {
+      str = ((valtmp & 1) ? "1" : "0") + str;
+      valtmp >>= 1;
+    }
+    return str;
+  }
 #endif
 
 private:

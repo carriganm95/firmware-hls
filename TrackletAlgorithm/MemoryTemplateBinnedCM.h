@@ -92,7 +92,7 @@ class MemoryTemplateBinnedCM{
     return dataarray_[icopy][ibx][getNEntryPerBin()*slot+index];
   }
   
-  bool write_mem(BunchXingT ibx, ap_uint<NBIT_BIN> slot, DataType data, int nentry_ibx) {
+  bool write_mem(BunchXingT ibx, ap_uint<NBIT_BIN> slot, DataType data, unsigned int nentry_ibx) {
 #pragma HLS ARRAY_PARTITION variable=dataarray_ dim=1
 
 #pragma HLS inline
@@ -228,7 +228,7 @@ class MemoryTemplateBinnedCM{
 
   static constexpr int getWidth() {return DataType::getWidth();}
   
-  static std::string decodeToBits(unsigned int field, unsigned int size) {
+  /*static std::string decodeToBits(unsigned int field, unsigned int size) {
     unsigned int valtmp = field;
     std::string str = "";
     for(unsigned int i=0; i< size; i++) {
@@ -236,7 +236,7 @@ class MemoryTemplateBinnedCM{
       valtmp >>= 1;
     }
     return str;
-  }
+  }*/
 
 #endif
 
