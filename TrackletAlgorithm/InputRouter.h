@@ -21,6 +21,27 @@ static const int kNMEMwidth = 5;
 #endif
 
 
+// LUT with phi corrections to the nominal radius. Only used by layers.
+// Values are determined by the radius and the bend of the stub.
+const int kPhiCorrtable_L1[] =
+#include "../emData/LUTs/VMPhiCorrL1.tab"
+;
+const int kPhiCorrtable_L2[] =
+#include "../emData/LUTs/VMPhiCorrL2.tab"
+;
+const int kPhiCorrtable_L3[] =
+#include "../emData/LUTs/VMPhiCorrL3.tab"
+;
+const int kPhiCorrtable_L4[] =
+#include "../emData/LUTs/VMPhiCorrL4.tab"
+;
+const int kPhiCorrtable_L5[] =
+#include "../emData/LUTs/VMPhiCorrL5.tab"
+;
+const int kPhiCorrtable_L6[] =
+#include "../emData/LUTs/VMPhiCorrL6.tab"
+;
+
 
 // // maximum number of IR memories 
 // constexpr unsigned int kNIRMemories = 20;
@@ -86,7 +107,6 @@ static const int kLSBLyrBts = 1;
 static const int kMSBLyrBts = 2;
 
 constexpr unsigned int kMaxNmemories = 20;  
-#define IR_DEBUG false
 
 // Get the corrected phi, bin
 // i.e. phi at the average radius of the barrel
@@ -194,25 +214,20 @@ void GetMemoryIndex(unsigned int nMemsPerLyr[nLyrs]
 	}
 }
 
-template<unsigned int nOMems, unsigned int nLUTEntries>
+template<unsigned int nOMems >
 void InputRouter( const BXType bx
 	, const ap_uint<kLINKMAPwidth> hLinkWord
 	, const ap_uint<kBINMAPwidth> hPhBnWord 
-	, const int hPhiCorrtable_L1[nLUTEntries]
-	, const int hPhiCorrtable_L2[nLUTEntries]
-	, const int hPhiCorrtable_L3[nLUTEntries]
 	, ap_uint<kNBits_DTC>* hInputStubs
 	, BXType & bx_o // output bx 
 	, DTCStubMemory hOutputStubs[nOMems])
 {
 	
 	#pragma HLS inline
-	#pragma HLS interface ap_memory port = hPhiCorrtable_L1
-  	#pragma HLS interface ap_memory port = hPhiCorrtable_L2
-  	#pragma HLS interface ap_memory port = hPhiCorrtable_L3
-  	#pragma HLS interface register port = bx_o
-  
-  	ap_uint<1> hIs2S= hLinkWord.range(kLINKMAPwidth-4,kLINKMAPwidth-4);
+	#pragma HLS interface register port = bx_o
+	#pragma HLS array_partition variable = hOutputStubs complete
+
+	ap_uint<1> hIs2S= hLinkWord.range(kLINKMAPwidth-4,kLINKMAPwidth-4);
 
 	// count memories 
 	unsigned int nMems=0;
@@ -261,13 +276,28 @@ void InputRouter( const BXType bx
 	  // LUT with the phi 
 	  // corrections 
 	  static const int* cLUT; 
-	  if( hLyrId == kFrstPSBrlLyr || hLyrId == kFrst2SBrlLyr ) 
-	  	cLUT = hPhiCorrtable_L1;
-	  else if( hLyrId == kScndPSBrlLyr || hLyrId == kScnd2SBrlLyr ) 
-	  	cLUT = hPhiCorrtable_L2;
-	  else if( hLyrId == kThrdPSBrlLyr || hLyrId == kThrd2SBrlLyr )
-	  	cLUT = hPhiCorrtable_L3;
-	  
+	  if( hLyrId == kFrstPSBrlLyr )
+	  {
+	  	cLUT = kPhiCorrtable_L1;
+	  }
+	  else if( hLyrId == kScndPSBrlLyr )
+	  {
+	  	cLUT = kPhiCorrtable_L2;
+	  }
+	  else if( hLyrId == kThrdPSBrlLyr ) 
+	  {
+	  	cLUT = kPhiCorrtable_L3;
+	  }
+	  else if( hLyrId == kFrst2SBrlLyr ) 
+	  {
+	  	cLUT = kPhiCorrtable_L4;
+	  }else if( hLyrId == kScnd2SBrlLyr )
+	  {
+	  	cLUT = kPhiCorrtable_L5;
+	  }else if( hLyrId == kThrd2SBrlLyr )
+	  {
+	  	cLUT = kPhiCorrtable_L6;
+	  }
 	  // update index
 	  unsigned int cIndx = 0;
 	  GetMemoryIndex<kMaxLyrsPerDTC>( nMemsPerLyr, hEncLyr, cIndx);
@@ -317,5 +347,3 @@ void InputRouter( const BXType bx
 
 
 #endif
-
-

@@ -26,7 +26,7 @@ This would create a project directory \<project> ("projrouter" in case of the ab
 3) vivado -mode batch -source makeProject.tcl (creates Vivado project).
 4) vivado -mode batch -source runSim.tcl (runs Vivado simulation,
    which writes data output from chain to dataOut/*.txt).
-5) python ../../common/script/CompareMemPrintsFW.py -p -s (compares .txt files in emData and dataOut/ writing comparison to dataOut/*_cmp.txt).
+5) python ../../common/script/CompareMemPrintsFW.py -p -s (compares .txt files in emData and dataOut/ writing comparison to dataOut/*_cmp.txt. Uses Python 3.).
 6) vivado -mode batch -source ../../common/script/synth.tcl (runs synthesis, writes utilization & timing reports to current directory).
 7) vivado -mode batch -source ../../common/script/impl.tcl (runs implementation, writes utilization & timing reports to current directory). N.B. This step is optional, and not required for code validation.
 
@@ -83,7 +83,7 @@ The C++ emulation was used to create the files that are downloaded by emData/dow
 cmsrel CMSSW_11_3_0_pre3
 cd CMSSW_11_3_0_pre3/src/
 cmsenv 
-git cms-checkout-topic -u cms-L1TK:fw_synch_210503
+git cms-checkout-topic -u cms-L1TK:fw_synch_210611
 git clone https://github.com/cms-data/L1Trigger-TrackFindingTracklet.git L1Trigger/TrackFindingTracklet/data
 cd L1Trigger/TrackFindingTracklet/data/
 mkdir -p LUTs \
