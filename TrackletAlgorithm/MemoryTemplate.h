@@ -18,7 +18,6 @@ public:
   typedef typename DataType::BitWidths BitWidths;
   typedef ap_uint<NBIT_BX> BunchXingT;
   typedef ap_uint<NBIT_ADDR> NEntryT;
-  
 protected:
 
   DataType dataarray_[1<<NBIT_BX][1<<NBIT_ADDR];  // data array
@@ -147,17 +146,15 @@ public:
   }
 
   static constexpr int getWidth() {return DataType::getWidth();}
- 
-  std::string name_;   
-  void setName(std::string name) { name_ = name;}
-  std::string const& getName() const { return name_;}
-
-  unsigned int iSector_;   
-  void setSector(unsigned int iS) { iSector_ = iS;}
-  unsigned int getSector() const { return iSector_;}   
- 
 #endif
 
+#ifdef CMSSW_GIT_HASH
+std::string name_;   
+void setMemName(std::string name) { name_ = name;}
+std::string const& getMemName() const { return name_;}
+unsigned int iSector_;   
+void setMemSector(unsigned int iS) { iSector_ = iS;}
+unsigned int getMemSector() const { return iSector_;}   
+#endif
 };
-
 #endif

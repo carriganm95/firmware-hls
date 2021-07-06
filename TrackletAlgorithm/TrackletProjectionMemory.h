@@ -3,6 +3,7 @@
 
 #include "Constants.h"
 #include "MemoryTemplate.h"
+#include "globalFunctions.h"
 
 // TrackletProjectionBase is where we define the bit widths, which depend on
 // the class template parameter.
@@ -178,13 +179,13 @@ public:
   }
 
   // The phi derivative is d(phi)/d(r) at the given layer/disk
-  TProjPHIDER getPhiDer() {
+  TProjPHIDER getPhiDer() const {
     return data_.range(kTProjPhiDMSB,kTProjPhiDLSB);
   }
 
   // The r/z derivative is d(z)/d(r) at the given layer and d(r)/d(z) at the
   // given disk
-  TProjRZDER getRZDer() {
+  TProjRZDER getRZDer() const {
     return data_.range(kTProjRZDMSB,kTProjRZDLSB);
   }
 
@@ -213,29 +214,17 @@ public:
     data_.range(kTProjRZDMSB,kTProjRZDLSB) = zder;
   }
 
-  std::string getBitStr() {
-
-     std::string str = decodeToBits(getTCID(),TrackletProjectionBase<TProjType>::kTProjTCIDSize);
-     str += "|"+decodeToBits(getTrackletIndex(),TrackletProjectionBase<TProjType>::kTProjTrackletIndexSize);
-     str += "|"+decodeToBits(getPhi(),TrackletProjectionBase<TProjType>::kTProjPhiSize);
-     str += "|"+decodeToBits(getRZ(),TrackletProjectionBase<TProjType>::kTProjRZSize);
-     str += "|"+decodeToBits(getPhiDer(),TrackletProjectionBase<TProjType>::kTProjPhiDSize);
-     str += "|"+decodeToBits(getRZDer(),TrackletProjectionBase<TProjType>::kTProjRZDSize);
-     return str;
-  }
-
-  // TO DO: This belongs in some sort of helper class.
-  std::string decodeToBits(unsigned int field, unsigned int size) const 
-  {
-
-    unsigned int valtmp = field;
-    std::string str = "";
-    for(unsigned int i=0; i< size; i++) {
-      str = ((valtmp & 1) ? "1" : "0") + str;
-      valtmp >>= 1;
-    }
+#ifdef CMSSW_GIT_HASH
+  std::string getBitStr() const {
+    std::string str = decodeToBits(getTCID(),TrackletProjectionBase<TProjType>::kTProjTCIDSize);
+    str += "|"+decodeToBits(getTrackletIndex(),TrackletProjectionBase<TProjType>::kTProjTrackletIndexSize);
+    str += "|"+decodeToBits(getPhi(),TrackletProjectionBase<TProjType>::kTProjPhiSize);
+    str += "|"+decodeToBits(getRZ(),TrackletProjectionBase<TProjType>::kTProjRZSize);
+    str += "|"+decodeToBits(getPhiDer(),TrackletProjectionBase<TProjType>::kTProjPhiDSize);
+    str += "|"+decodeToBits(getRZDer(),TrackletProjectionBase<TProjType>::kTProjRZDSize);
     return str;
   }
+#endif
  
 private:
   

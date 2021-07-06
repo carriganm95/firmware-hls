@@ -3,6 +3,7 @@
 
 #include "Constants.h"
 #include "MemoryTemplateBinned.h"
+#include "globalFunctions.h"
 
 // VMStubMEBase is where we define the bit widths, which depend on the class template parameter
 template<int VMSMEType> class VMStubMEBase {};
@@ -136,26 +137,14 @@ public:
     data_.range(kVMSMEFineZMSB,kVMSMEFineZLSB) = finez;
   }
 
-  std::string getBitStr() 
-  {
-     std::string str = decodeToBits(getIndex(),VMStubMEBase<VMSMEType>::kVMSMEIndexSize);
-     str += "|"+decodeToBits(getBend(),VMStubMEBase<VMSMEType>::kVMSMEBendSize);
-     str += "|"+decodeToBits(getFineZ(),VMStubMEBase<VMSMEType>::kVMSMEFineZSize);
-     return str;
-  }
-
-  // TO DO: This belongs in some sort of helper class.
-  std::string decodeToBits(unsigned int field, unsigned int size) const 
-  {
-
-    unsigned int valtmp = field;
-    std::string str = "";
-    for(unsigned int i=0; i< size; i++) {
-      str = ((valtmp & 1) ? "1" : "0") + str;
-      valtmp >>= 1;
-    }
+#ifdef CMSSW_GIT_HASH
+  std::string getBitStr() const {
+   std::string str = decodeToBits(getIndex(),VMStubMEBase<VMSMEType>::kVMSMEIndexSize);
+    str += "|"+decodeToBits(getBend(),VMStubMEBase<VMSMEType>::kVMSMEBendSize);
+    str += "|"+decodeToBits(getFineZ(),VMStubMEBase<VMSMEType>::kVMSMEFineZSize);
     return str;
   }
+#endif
 
 private:
 

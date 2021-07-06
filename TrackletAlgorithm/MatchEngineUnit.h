@@ -10,10 +10,10 @@
 #include "AllStubMemory.h"
 #include "AllProjectionMemory.h"
 #include "FullMatchMemory.h"
-//#include "hls_math.h"
 #include <iostream>
 #include <fstream>
 #include <bitset>
+#include <cassert>
 #include "MatchProcessor_parameters.h"
 
 template<int nbits>
