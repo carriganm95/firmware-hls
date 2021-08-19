@@ -151,6 +151,10 @@ public:
 #endif 
 
 #ifdef CMSSW_GIT_HASH
+#define NameAndSector
+#endif
+
+#ifdef NameAndSector
   std::string name_;
   void setName(std::string name) { name_ = name;}
   std::string const& getName() const { return name_;}

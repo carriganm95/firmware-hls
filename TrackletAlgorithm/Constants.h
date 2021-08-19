@@ -5,7 +5,7 @@
 
 #ifdef CMSSW_GIT_HASH
   //#include "Settings.h"
-  #include "Settings.h"
+  #include "L1Trigger/TrackFindingTracklet/interface/Settings.h"
   using namespace trklet;
 #endif
 
