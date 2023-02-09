@@ -139,6 +139,7 @@ public:
   std::string getBitStr() const {
     std::string str = decodeToBits(getIndex());
     str += "|"+decodeToBits(getBend());
+    str += "|"+decodeToBits(getFinePhi());
     str += "|"+decodeToBits(getFineZ());
     return str;
   }
