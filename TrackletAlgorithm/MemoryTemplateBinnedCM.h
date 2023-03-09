@@ -14,12 +14,7 @@
 #endif
 #endif
 
-#ifdef CMSSW_GIT_HASH
-#define NBIT_BX 2
-template<class DataType, unsigned int DUMMY, unsigned int NBIT_ADDR, unsigned int NBIT_BIN, unsigned int NCOPY>
-#else
 template<class DataType, unsigned int NBIT_BX, unsigned int NBIT_ADDR, unsigned int NBIT_BIN, unsigned int NCOPY>
-#endif
 
 // DataType: type of data object stored in the array
 // NBIT_BX: number of bits for BX;
@@ -125,9 +120,6 @@ class MemoryTemplateBinnedCM{
       (ireg,ibin)=slot;
       nentries8_[ibx][ibin].range(ireg*4+3,ireg*4)=nentry_ibx+1;
       binmask8_[ibx][ibin].set_bit(ireg,true);
-      std::cout << "ibin: " << ibin << ", ireg: " << ireg << ", slot: " << slot << ", nentries8_: " << nentries8_[ibx][ibin] << ",\nnentries8_[ibx][ibin].range(ireg*4+3,ireg*4): " <<
-		nentries8_[ibx][ibin].range(ireg*4+3,ireg*4) << ", nentry_ibx+1: " << nentry_ibx+1 << ", binmask8_: " << binmask8_[ibx][ibin] << 
-                "size of array: " << sizeof(nentries8_) / sizeof(nentries8_[0]) << " by " << sizeof(nentries8_[0]) / sizeof(ap_uint<32>) << std::endl;
       #endif
 
       return true;
@@ -193,26 +185,19 @@ class MemoryTemplateBinnedCM{
 
     int slot = (int)strtol(split(line, ' ').front().c_str(), nullptr, base); // Convert string (in hexadecimal) to int
 
-    std::cout << "*************In memory template binned **************\nknBitsRZBinCM: " << kNBitsRZBinCM << ", kNbitsphibin: " << kNbitsphibin << std::endl;   
-
     ap_uint<kNBitsRZBinCM> ibin;
     ap_uint<kNbitsphibin> ireg;
     (ireg,ibin)=slot;
     ap_uint<4> nentry_ibx = nentries8_[ibx][ibin].range(ireg*4+3,ireg*4);
    
-    std::cout<< "nentry_ibx: " << nentry_ibx << ", ibx: " << ibx << ", ibin: " << ibin << ", nentries8_: " << nentries8_[ibx][ibin] << std::endl;
- 
     DataType data(datastr.c_str(), base);
-    std::cout << "pre second write mem" <<  std::endl;
     bool success = write_mem(ibx, slot, data, nentry_ibx);
-    std::cout << "write mem success: " << success << std::endl;
     #ifndef CMSSW_GIT_HASH
     if (success) {
       nentries8_[ibx][ibin].range(ireg*4+3,ireg*4)=nentry_ibx+1;
       binmask8_[ibx][ibin].set_bit(ireg,true);
     }
     #endif
-    std::cout << "returning..." << std::endl;
     return success;
   }
 
@@ -233,7 +218,7 @@ class MemoryTemplateBinnedCM{
   {
 	for(unsigned int slot=0;slot<8;slot++) {
       //std::cout << "slot "<<slot<<" entries "
-      //		<<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
+      //                <<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
       for (unsigned int i = 0; i < nentries8_[bx][slot]; ++i) {
 	edm::LogVerbatim("L1trackHLS") << bx << " " << i << " ";
 	print_entry(bx, i + slot*getNEntryPerBin() );
