@@ -71,9 +71,10 @@ public:
   };
 
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEIDSize> VMSMEID;
-  typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEBendSize> VMSMEBEND;
-  typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEFinePhiSize> VMSMEFINEPHI;
+  typedef ap_int<VMStubMECMBase<VMSMEType>::kVMSMEBendSize> VMSMEBEND;
+  typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEBendSize - 1> VMSMEBENDPSDISK;
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEFineZSize> VMSMEFINEZ;
+  typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEFinePhiSize> VMSMEFINEPHI;
 
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMStubMECMSize> VMStubMECMData;
 
@@ -108,6 +109,17 @@ public:
 
   VMSMEBEND getBend() const {
     return data_.range(kVMSMEBendMSB,kVMSMEBendLSB);
+  }
+
+  bool isPSStub() const {
+    if(VMSMEType == BARRELPS) return true;
+    else if(VMSMEType == BARREL2S) return false;
+    else if(VMSMEType == DISK) return (getBend() & (1 << (VMStubMECMBase<VMSMEType>::kVMSMEBendSize-1))) == 0 && getBend() != 0; // Check highest 1 bits regardless of template type
+    static_assert(true, "Should not be possible!");
+  }
+
+  VMSMEBENDPSDISK getBendPSDisk() const {
+    return data_.range(kVMSMEBendMSB - 1,kVMSMEBendLSB);
   }
 
   VMSMEFINEPHI getFinePhi() const {
@@ -152,6 +164,6 @@ private:
 };
 
 // Memory definition
-template<int VMSMEType, int RZSize, int PhiRegSize, unsigned int NCOPY > using VMStubMEMemoryCM = MemoryTemplateBinnedCM<VMStubMECM<VMSMEType>, 2, 4+RZSize+PhiRegSize, RZSize+PhiRegSize, NCOPY>;
+template<int VMSMEType, int RZSize, int PhiRegSize, unsigned int NCOPY > using VMStubMEMemoryCM = MemoryTemplateBinnedCM<VMStubMECM<VMSMEType>, 2, 4+RZSize+PhiRegSize, RZSize+PhiRegSize, PhiRegSize, NCOPY>;
 
 #endif

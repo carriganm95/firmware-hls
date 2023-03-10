@@ -6,7 +6,6 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <bitset>
 #ifdef CMSSW_GIT_HASH
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #else
@@ -14,7 +13,12 @@
 #endif
 #endif
 
-template<class DataType, unsigned int NBIT_BX, unsigned int NBIT_ADDR, unsigned int NBIT_BIN, unsigned int NCOPY>
+#ifdef CMSSW_GIT_HASH
+#define NBIT_BX 0
+template<class DataType, unsigned int DUMMY, unsigned int NBIT_ADDR, unsigned int NBIT_BIN, unsigned int kNbitsphibinCM, unsigned int NCOPY>
+#else
+template<class DataType, unsigned int NBIT_BX, unsigned int NBIT_ADDR, unsigned int NBIT_BIN, unsigned int kNbitsphibinCM, unsigned int NCOPY>
+#endif
 
 // DataType: type of data object stored in the array
 // NBIT_BX: number of bits for BX;
@@ -34,14 +38,13 @@ class MemoryTemplateBinnedCM{
     kNBxBins = 1<<NBIT_BX,
     kNSlots = 1<<NBIT_BIN,
     kNMemDepth = 1<<NBIT_ADDR,
-    kNBitsRZBinCM = NBIT_BIN-kNbitsphibin
+    kNBitsRZBinCM = NBIT_BIN-kNbitsphibinCM
   };
 
   DataType dataarray_[NCOPY][kNBxBins][kNMemDepth];  // data array
 
-  ap_uint<8> binmask8_[kNBxBins][(1<<NBIT_BIN)/8]; //1<<kNBitsRZBinCM
-  ap_uint<32> nentries8_[kNBxBins][(1<<NBIT_BIN)/8];
-
+  ap_uint<8> binmask8_[kNBxBins][(1<<NBIT_BIN)/8];
+  ap_uint<36> nentries8_[kNBxBins][(1<<NBIT_BIN)/8];
   
  public:
 
@@ -53,7 +56,7 @@ class MemoryTemplateBinnedCM{
 
   NEntryT getEntries(BunchXingT bx, ap_uint<NBIT_BIN> slot) const {
     ap_uint<kNBitsRZBinCM> ibin;
-    ap_uint<kNbitsphibin> ireg;
+    ap_uint<kNbitsphibinCM> ireg;
     (ireg,ibin)=slot;
     return nentries8_[bx][ibin].range(ireg*4+3,ireg*4);
   }
@@ -116,7 +119,7 @@ class MemoryTemplateBinnedCM{
       
       #ifdef CMSSW_GIT_HASH
       ap_uint<kNBitsRZBinCM> ibin;
-      ap_uint<kNbitsphibin> ireg;
+      ap_uint<kNbitsphibinCM> ireg;
       (ireg,ibin)=slot;
       nentries8_[ibx][ibin].range(ireg*4+3,ireg*4)=nentry_ibx+1;
       binmask8_[ibx][ibin].set_bit(ireg,true);
@@ -186,11 +189,12 @@ class MemoryTemplateBinnedCM{
     int slot = (int)strtol(split(line, ' ').front().c_str(), nullptr, base); // Convert string (in hexadecimal) to int
 
     ap_uint<kNBitsRZBinCM> ibin;
-    ap_uint<kNbitsphibin> ireg;
+    ap_uint<kNbitsphibinCM> ireg;
     (ireg,ibin)=slot;
     ap_uint<4> nentry_ibx = nentries8_[ibx][ibin].range(ireg*4+3,ireg*4);
-   
+
     DataType data(datastr.c_str(), base);
+
     bool success = write_mem(ibx, slot, data, nentry_ibx);
     #ifndef CMSSW_GIT_HASH
     if (success) {
@@ -198,6 +202,7 @@ class MemoryTemplateBinnedCM{
       binmask8_[ibx][ibin].set_bit(ireg,true);
     }
     #endif
+
     return success;
   }
 
@@ -218,7 +223,7 @@ class MemoryTemplateBinnedCM{
   {
 	for(unsigned int slot=0;slot<8;slot++) {
       //std::cout << "slot "<<slot<<" entries "
-      //                <<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
+      //		<<nentries_[bx%NBX].range((slot+1)*4-1,slot*4)<<endl;
       for (unsigned int i = 0; i < nentries8_[bx][slot]; ++i) {
 	edm::LogVerbatim("L1trackHLS") << bx << " " << i << " ";
 	print_entry(bx, i + slot*getNEntryPerBin() );
