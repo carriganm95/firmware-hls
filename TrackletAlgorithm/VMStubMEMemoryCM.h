@@ -71,11 +71,7 @@ public:
   };
 
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEIDSize> VMSMEID;
-<<<<<<< HEAD
-  typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEBendSize> VMSMEBEND;
-=======
   typedef ap_int<VMStubMECMBase<VMSMEType>::kVMSMEBendSize> VMSMEBEND;
->>>>>>> 8ceacc18cbbb13931e7f23bf7689b6156b34d0e0
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEBendSize - 1> VMSMEBENDPSDISK;
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEFineZSize> VMSMEFINEZ;
   typedef ap_uint<VMStubMECMBase<VMSMEType>::kVMSMEFinePhiSize> VMSMEFINEPHI;
@@ -115,8 +111,6 @@ public:
     return data_.range(kVMSMEBendMSB,kVMSMEBendLSB);
   }
 
-<<<<<<< HEAD
-=======
   bool isPSStub() const {
     if(VMSMEType == BARRELPS) return true;
     else if(VMSMEType == BARREL2S) return false;
@@ -124,7 +118,6 @@ public:
     static_assert(true, "Should not be possible!");
   }
 
->>>>>>> 8ceacc18cbbb13931e7f23bf7689b6156b34d0e0
   VMSMEBENDPSDISK getBendPSDisk() const {
     return data_.range(kVMSMEBendMSB - 1,kVMSMEBendLSB);
   }
