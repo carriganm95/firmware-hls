@@ -211,20 +211,25 @@ public:
   }
 
 #ifdef CMSSW_GIT_HASH
-  std::string getBitStr() const {
-      std::string str = decodeToBits(getR());
-      str += "|"+decodeToBits(getZ());
-      str += "|"+decodeToBits(getPhi());
-      str += "|"+decodeToBits(getBend());
-      return str;
-  }
-  std::string getBitStrDisk2S() const {
-      std::string str = decodeToBits(getR());
+
+  inline std::string getBitStr() const {
+    // Function implementation
+    std::string str = "";
+    std::cout << "Hello from newMemberFunction!" << std::endl;
+    if (ASType == DISK2S){
+      str = decodeToBits(getR());
       str += "|"+decodeToBits(getZ());
       str += "|"+decodeToBits(getPhi());
       str += "|"+decodeToBits(getAlpha());
       str += "|"+decodeToBits(getBend());
-      return str;
+    }
+    else {
+      str = decodeToBits(getR());
+      str += "|"+decodeToBits(getZ());
+      str += "|"+decodeToBits(getPhi());
+      str += "|"+decodeToBits(getBend());
+    }
+    return str;
   }
 #endif
 
@@ -233,18 +238,6 @@ private:
   AllStubData data_;
 
 };
-
-#ifdef CMSSW_GIT_HASH
-  template<>
-  inline std::string AllStub<DISK2S>::getBitStr() const {
-      std::string str = decodeToBits(getR());
-      str += "|"+decodeToBits(getZ());
-      str += "|"+decodeToBits(getPhi());
-      str += "|"+decodeToBits(getAlpha());
-      str += "|"+decodeToBits(getBend());
-      return str;
-  }
-#endif
 
 // Special data object definition
 template<>
@@ -273,6 +266,10 @@ public:
   static constexpr int getWidth() {return AllStubBase<DISK>::kAllStubSize;}
 
   AllStubData raw() const {return data_;}
+
+#ifdef CMSSW_GIT_HASH
+  inline std::string getBitStr() const;
+#endif
 
 private:
 
@@ -380,11 +377,15 @@ public:
   }
 
 #ifdef CMSSW_GIT_HASH
-  std::string getBitStr() const {
-    std::string str = decodeToBits(getR());
+  inline std::string getBitStr() const {
+    // Function implementation
+    std::string str = "";
+    std::cout << "Hello from newMemberFunction!" << std::endl;
+    str = decodeToBits(getR());
     str += "|"+decodeToBits(getZ());
     str += "|"+decodeToBits(getPhi());
     str += "|"+decodeToBits(getBend());
+
     return str;
   }
 #endif
@@ -394,6 +395,34 @@ private:
   AllStubData data_;
 
 };
+
+#ifdef CMSSW_GIT_HASH
+
+  inline std::string AllStub<6>::getBitStr() const {
+    // Function implementation
+    std::string str = "";
+    std::cout << "Hello from newMemberFunction!" << std::endl;
+
+    AllStub<DISKPS> derived(this->raw());
+    if (!derived.isPSStub()){
+      AllStub<DISK2S> derived2(this->raw());
+      str = decodeToBits(derived2.getR());
+      str += "|"+decodeToBits(derived2.getZ());
+      str += "|"+decodeToBits(derived2.getPhi());
+      //str += "|"+decodeToBits(derived2.getAlpha());
+      str += "|"+decodeToBits(derived2.getBend());
+    }
+    else{
+      str = decodeToBits(derived.getR());
+      str += "|"+decodeToBits(derived.getZ());
+      str += "|"+decodeToBits(derived.getPhi());
+      str += "|"+decodeToBits(derived.getBend());
+    }
+
+    return str;
+  }
+
+#endif
 
 // Memory definition
 template<int ASType> using AllStubMemory = MemoryTemplate<AllStub<ASType>, 3, kNBits_MemAddr>;
